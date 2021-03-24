@@ -93,15 +93,15 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
 
 ### 8.1 - Standalone:
 
-  8.1.1 - Alterar a variavel n_workers para quantidade de processadores disponíveis no computador
+  8.1.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis no computador
 
-  8.1.2 - Alterar a variavel standalonemode para True
+  8.1.2 - Alterar a variavel `standalonemode` para `True`
 
 ### 8.2 - Distribuído:
 
   8.2.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis na rede
 
-  8.2.2 - Alterar a variavel standalonemode para True
+  8.2.2 - Alterar a variavel `standalonemode` para `True`
 
   8.2.3 - Execute no terminal do computador principal o comando:
 
