@@ -10,6 +10,10 @@ Date: 24-mar-2021
 
 Version: v.06
 
+
+![Print do Vacivida](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/print_vacinometro.jpeg)
+
+
 ## O QUE É? 
 
 Este script em python tem como objetivo eliminar a necessidade de digitacão manual no sistema de vacinacão do
@@ -121,11 +125,19 @@ ray start --address='ip_do_node_principal:6379' --redis-password='52415900000000
 ray status
 ```
 
+![Print do Ray Status](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/ray_status.png)
+
+
 9. Inicie o bot no computador principal com o comando:
 
  ```
  python3 vacibot_v06.py
  ```
+
+![Print do Bot em Execucao 01](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/print_final_01.png)
+![Print do Bot em Execucao 02](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/print_final_02.png)
+
+
 
 Dicas:
 
