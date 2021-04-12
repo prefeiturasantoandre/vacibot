@@ -291,6 +291,10 @@ class RegisterBatch():
                 self.dict['DSC_AREA'] = "BA0E494756847EBFE053D065C70AE389"
             elif ("SAÚDE" in self.dict['DSC_AREA']) :
                 self.dict['DSC_AREA'] = "B83C80018F62B8B5E053D065C70AB1BB"
+            elif ("EDUCAÇÃO" in self.dict['DSC_AREA']):
+                self.dict['DSC_AREA'] = "BF67A4F62608FD42E053D065C70A7D70"
+            elif ("SEGURANÇA" in self.dict['DSC_AREA']):
+                self.dict['DSC_AREA'] = "BEC82DAA494479CEE053D065C70A2277"
             else:
                 print ("Grupo de vacinacao nao identificado!" , self.dict['DSC_AREA'])
 
