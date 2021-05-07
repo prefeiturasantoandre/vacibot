@@ -66,7 +66,10 @@ lotes_coronavac = {
 "210144" : "3c6bb16a-78b4-41a6-b6d6-782cc1951897",
 "210145" : "87bc459a-d885-406b-9a2e-e2f18075decb",
 "210147" : "465acddf-d2fc-4c39-9596-3111387d3eab",
-"210148" : "80a9973f-11bf-4c8b-b8ff-e0ad94cdd206"
+"210148" : "80a9973f-11bf-4c8b-b8ff-e0ad94cdd206",
+"210149" : "04312ebf-f8c3-46b1-bfc0-dbef0da98274",
+"210150" : "ddd1cb58-f150-4ad9-a20c-895ee26863d9",
+"210209" : "5808dd10-07f3-4da0-9fc7-6c11f05b5797"
 }
 
 lotes_astrazeneca={
@@ -115,6 +118,21 @@ lotes_astrazeneca={
 "214VCD047W" : "8ba0fa1d-4fbc-4266-ab16-5f7a8e1e00fa",
 "214VCD048Z" : "0595caee-1365-4f17-a26e-11edf1f618a8",
 "214VCD049W" : "037e93a7-536d-4d61-af0c-f4590444598e",
-"214VCD050W" : "30c9f67b-fc08-4c23-862f-e69693ea5765"
+"214VCD050W" : "30c9f67b-fc08-4c23-862f-e69693ea5765",
+"214VCD051Z" : "f49712f1-547d-463e-8b7c-ba950dbd90ea",
+"214VCD052W" : "fb44a628-247a-41e9-8b31-d1c7d374ca2e",
+"214VCD054Z" : "d2232fae-c4ab-4d56-a8ed-15c5ffdbf241",
+"214VCD055W" : "7ee1fe2a-d693-435a-9a12-afe84114cc34",
+"214VCD057Z" : "d9ac7699-8442-4cc2-83f5-acf13c3707ce",
+"214VCD059W" : "a2a97c44-446a-4b3f-a0be-f92c1bf9cceb",
+"214VCD060Z" : "3a9d04b4-d8e8-482b-a0ea-a58340b4d409",
+"214VCD061Z" : "8d265f15-8c98-4ed7-9433-5da110600de4",
+"214VCD062W" : "cf6e05b6-57f8-4135-840b-eaa44ef480bf",
+"214VCD063W" : "017e8baf-6486-4162-81f2-4ae5e72a2a2a",
+"214VCD064Z" : "e2f0e0c6-8403-40f9-b035-72bc215a6808",
+"214VCD066W" : "83231ecb-d6a8-4cd5-a53d-951b0c870ba4",
+"214VCD068W" : "2a0cb0f1-72b0-4795-bb7a-3345f47dc6ed",
+"214VCD069W" : "635c515d-24f2-4514-8d5c-dd6f71685c25",
+"214VCD071Z" : "935c8b3c-3d15-402a-9d5d-55c1f8c8b435"
 }
 
