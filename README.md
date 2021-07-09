@@ -1,14 +1,10 @@
-# VACIBOT v.06 - Bot para automatizacao de registros no Vacivida para o COVID19
+# VACIBOT v.08 - Bot para automatizacao de registros no Vacivida para o COVID19
 
-by Victor Fragoso - Prefeitura Municipal de Santo André
+by [Victor Fragoso](https://github.com/victorffs), [Willian Sanches](https://github.com/wi-sanc) - Prefeitura Municipal de Santo André
 
-Email: vfragoso@santoandre.sp.gov.br
+Date: 09-jul-2021
 
-Phone: +55 11 97079 1572
-
-Date: 24-mar-2021
-
-Version: v.06
+Version: v.08
 
 
 ![Print do Vacivida](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/print_vacinometro.jpeg)
@@ -52,7 +48,7 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
 
 ## INSTRUCÕES 
 
-1. Instale os softwares
+1. Instale os softwares necessários
 
    obs.: Para o modo distribuído é necessário instalar em todas as máquinas do cluster
 
@@ -61,17 +57,34 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
    sudo apt install -y python3 python3-pip ray
    ```
 
-2. Instale os módulos Python através do PIP
+2. Clone o repositório do github e acesse a pasta
+
+   ```
+   git clone https://github.com/prefeiturasantoandre/vacibot.git
+   cd vacibot/
+   ```
+
+3. (opcional) Crie um Virtual Environment e ative-o 
+
+
+   obs.: Será necessário ativá-lo sempre que for utilizar o bot
+
+   ```
+   python3 -m venv venv
+   . venv/bin/activate
+   ```
+
+4. Instale os módulos Python através do PIP
 
    obs.: Para o modo distribuído é necessário instalar em todas as máquinas do cluster
 
    ```
-   pip3 install ray cx_Oracle unidecode lxml unidecode requests
+   pip3 install -r requirements.txt
    ou
-   python3 -m pip install cx_Oracle unidecode lxml unidecode requests
+   python3 -m pip install -r requirements.txt
    ```
 
-3. Faca o download do Instant Client OracleDB, converta e instale:
+5. Faca o download do Instant Client OracleDB, converta e instale:
 
    obs.: Para o modo distribuído é necessário instalar em todas as máquinas do cluster
 
@@ -82,44 +95,44 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
    sudo dpkg -i oracle-instantclient-basic_x.x.x.x.x-2_amd64.deb
    ```
 
-4. Altere as credenciais de acesso no arquivo `credentials.py` seguindo o padrão do arquivo
+6. Altere as credenciais de acesso no arquivo `credentials.py` seguindo o padrão do arquivo
 
-5. Adicione uma chave no `dictionary_vacivida.py` se houver um novo lote sendo aplicado de acordo com o vacivida
-   Obs.: Para isso é necessário acessar o código HTML da página de vacinacao do vacivida e buscar quais chaves estão disponíveis. Você pode buscar diretamente pelo código de alguma chave já existente para encontrar mais facilmente.
-   Irei adicionar um tutorial em breve sobre como fazer isso.
+Obs: Caso utilize o git para controle local, recomenda-se ignorar o arquivo ao realizar algum push. Para isso, acrescente `credentials.py` ao final do arquivo `.gitignore`
 
-6. Altere a variavel `n_workers` para a quantidade de processadores disponíveis
+7. (opcional) Altere a variavel `n_workers` de acordo com a quantidade de processadores disponíveis dividido pela quantidade de locais de vacinação. 
 
-7. Altere a variável `select_query` de acordo com a busca necessária em seu banco de dados para encontrar os nomes
+8. Altere a variável `select_query` em `__main__.py` de acordo com a busca necessária em seu banco de dados para encontrar os nomes
    que precisam ser enviados para o Vacivida
 
-8. Configure o Script para rodar em modo Standalone ou Distribuido
+9.  Preencha os dicionários `area_alias`, `vacinador`, `estabelecimento` em `dicts.py` de acordo com as informações das unidades.
 
-### 8.1 - Standalone:
+10. Configure o Script para rodar em modo Standalone ou Distribuido
 
-  8.1.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis no computador
+### 10.1 - Standalone:
 
-  8.1.2 - Alterar a variavel `standalonemode` para `True`
+  10.1.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis no computador dividido pela quantidade de locais de vacinação
 
-### 8.2 - Distribuído:
+  10.1.2 - Alterar a variavel `standalonemode` para `True`
 
-  8.2.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis na rede
+### 10.2 - Distribuído:
 
-  8.2.2 - Alterar a variavel `standalonemode` para `True`
+  10.2.1 - Alterar a variavel `n_workers` para quantidade de processadores disponíveis na rede dividido pela quantidade de locais de vacinação
 
-  8.2.3 - Execute no terminal do computador principal o comando:
+  10.2.2 - Alterar a variavel `standalonemode` para `True`
+
+  10.2.3 - Execute no terminal do computador principal o comando:
 
 ```
 ray start --head --port=6379
 ```
 
-8.2.4 - Execute em todos os computadores que estarão vinculados ao cluster o comando:
+10.2.4 - Execute em todos os computadores que estarão vinculados ao cluster o comando:
 
 ```
 ray start --address='ip_do_node_principal:6379' --redis-password='5241590000000000'
 ```
 
-8.2.5 - Verifique no computador principal se todos os nodes estao habilitados e conectados no cluster:
+10.2.5 - Verifique no computador principal se todos os nodes estao habilitados e conectados no cluster:
 
 ```
 ray status
@@ -128,10 +141,19 @@ ray status
 ![Print do Ray Status](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/ray_status.png)
 
 
-9. Inicie o bot no computador principal com o comando:
+11. A partir da pasta anterior à pasta em que o bot está instalada, inicie o bot no computador principal com o comando:
 
  ```
- python3 vacibot_v06.py
+ python3 vacibot
+ ou
+ python3 vacibot [N_WORKERS]
+ ```
+
+ onde [N_WORKERS] é a quantidade de workers desejada. Caso não especificado, utilizará o número pardão ou aquele especificado no passo 7.
+
+ Obs.: Caso esteja utilizando o Virtual Envirenment, ative-o antes de executar o comando anterior:
+ ```
+ . vacibot/venv/bin/activate
  ```
 
 ![Print do Bot em Execucao 01](https://github.com/prefeiturasantoandre/vacibot/blob/main/images/print_final_01.png)
@@ -143,6 +165,20 @@ Dicas:
 
 1. Para realizar modificacoes, é possível converter os comandos CURL (que foram capturados com a ferramenta de
 desenvolvedor do chrome) para Python através do link: https://curl.trillworks.com/#python
+
+## Autores
+### Victor Fragoso
+Github: [victorffs](https://github.com/victorffs)
+
+Email: vfragoso@santoandre.sp.gov.br
+
+Phone: +55 11 97079 1572
+### Willian Sanches
+Github: [wi-sanc](https://github.com/wi-sanc)
+
+Email: wcsanches@santoandre.sp.gov.br
+
+Phone: +55 11 97707 4734
 
 ## License
 
