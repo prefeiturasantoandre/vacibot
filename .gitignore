@@ -129,7 +129,8 @@ dmypy.json
 .pyre/
 
 # application
-#credentials.py
+credentials.py
+local_dicts.py
 
 # IDE
 .vscode/

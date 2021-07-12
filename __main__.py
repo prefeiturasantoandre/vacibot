@@ -1,3 +1,4 @@
+import dicts as di
 '''
 VACIBOT v.08 - Bot para automatizacao de registros no Vacivida para o COVID19
 by Victor Fragoso (https://github.com/victorffs), Willian Sanches (https://github.com/wi-sanc)- Prefeitura Municipal de Santo André
@@ -23,7 +24,6 @@ import sys
 # Importacao de arquivos de configuracao:
 from credentials import connection_params
 from credentials import login_vacivida
-import dicts as di
 
 # DEFINES
 n_workers = 2  # recomendado nao passar de 40 workers por credentials.py

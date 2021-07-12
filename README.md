@@ -95,16 +95,15 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
    sudo dpkg -i oracle-instantclient-basic_x.x.x.x.x-2_amd64.deb
    ```
 
-6. Altere as credenciais de acesso no arquivo `credentials.py` seguindo o padrão do arquivo
+6. Crie uma cópia de `credentials.example.py` com o nome `credentials.py`. Em seguida, altere as credenciais de acesso contidas no arquivo `credentials.py` seguindo o padrão do arquivo
 
-Obs: Caso utilize o git para controle local, recomenda-se ignorar o arquivo ao realizar algum push. Para isso, acrescente `credentials.py` ao final do arquivo `.gitignore`
 
 7. (opcional) Altere a variavel `n_workers` de acordo com a quantidade de processadores disponíveis dividido pela quantidade de locais de vacinação. 
 
 8. Altere a variável `select_query` em `__main__.py` de acordo com a busca necessária em seu banco de dados para encontrar os nomes
    que precisam ser enviados para o Vacivida
 
-9.  Preencha os dicionários `area_alias`, `vacinador`, `estabelecimento` em `dicts.py` de acordo com as informações das unidades.
+9.  Crie uma cópia de `local_dicts.example.py` com o nome `local_dicts.py`. Em seguida, preencha os dicionários `area_alias`, `vacinador`, `estabelecimento` em `local_dicts.py` de acordo com as informações das unidades.
 
 10. Configure o Script para rodar em modo Standalone ou Distribuido
 
