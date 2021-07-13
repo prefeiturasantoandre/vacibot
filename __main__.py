@@ -1,4 +1,3 @@
-import dicts as di
 '''
 VACIBOT v.08 - Bot para automatizacao de registros no Vacivida para o COVID19
 by Victor Fragoso (https://github.com/victorffs), Willian Sanches (https://github.com/wi-sanc)- Prefeitura Municipal de Santo André
@@ -24,6 +23,7 @@ import sys
 # Importacao de arquivos de configuracao:
 from credentials import connection_params
 from credentials import login_vacivida
+import dicts as di
 
 # DEFINES
 n_workers = 2  # recomendado nao passar de 40 workers por credentials.py
@@ -671,46 +671,37 @@ class Vacivida_Sys :
         self.objimunizacao = objimunizacao
          # print('LOG! = ', self.objimunizacao)
 
-        if (objimunizacao['DSC_COMORBIDADES'] != "null") :
-            # print ('LOG! = Paciente COM comorbidade')
-            self.data_imunizar = '{"Data":{"IdGrupoAtendimento":"'+str(objimunizacao['DSC_PUBLICO'])+'",'\
-                                 '"IdEstrategia":"'+objimunizacao['ESTRATEGIA']+'",'\
-                                 '"IdImunobiologico":"'+objimunizacao['DSC_TIPO_VACINA']+'",'\
-                                 '"IdDose":"'+objimunizacao['NUM_DOSE_VACINA']+'",'\
-                                 '"DataVacinacao":"'+objimunizacao['DTA_COMPARECIMENTO_PESSOA']+'",'\
-                                 '"DataAprazamento":"'+objimunizacao['DTA_APRAZAMENTO']+'",'\
-                                 '"IdLote":"'+objimunizacao['NUM_LOTE_VACINA']+'",'\
-                                 '"IdViaAdministracao":"'+objimunizacao['VIA_ADMINISTRACAO']+'",'\
-                                 '"IdLocalAplicacao":"'+objimunizacao['LOCAL_APLICACAO']+'",'\
-                                 '"IdVacinador":"'+objimunizacao['VACINADOR']+'",'\
-                                 '"IdPaciente":"'+objimunizacao['ID_PACIENTE']+'",'\
-                                 '"IdComorbidade":['+objimunizacao['COMORBSTRING']+'],'\
-                                 '"CRMComorbidade":"'+objimunizacao['NUM_CRM']+'",'\
-                                 '"VacinacaoComorbidade":['+objimunizacao['COMORBDICT']+']'+','\
-                                 '"DescricaoBPC":"'+'",'\
-                                 '"IdEstabelecimento":"'+objimunizacao['ESTABELECIMENTO']+'"},'\
-                                 '"AccessToken":"'+self.login_token+'"}'
+        imunizar_json = {
+            "IdGrupoAtendimento":str(objimunizacao["DSC_PUBLICO"]),
+            "IdEstrategia":objimunizacao["ESTRATEGIA"],
+            "IdImunobiologico":objimunizacao["DSC_TIPO_VACINA"],
+            "IdDose":objimunizacao["NUM_DOSE_VACINA"],
+            "DataVacinacao":objimunizacao["DTA_COMPARECIMENTO_PESSOA"],
+            "DataAprazamento":objimunizacao["DTA_APRAZAMENTO"],
+            "IdLote":objimunizacao["NUM_LOTE_VACINA"],
+            "IdViaAdministracao":objimunizacao["VIA_ADMINISTRACAO"],
+            "IdLocalAplicacao":objimunizacao["LOCAL_APLICACAO"],
+            "IdVacinador":objimunizacao["VACINADOR"],
+            "IdPaciente":objimunizacao["ID_PACIENTE"],
+            "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"]
 
-        elif (objimunizacao['DSC_COMORBIDADES'] == "null") :
-            # print ('LOG! = Paciente SEM comorbidade')
-            self.data_imunizar = '{"Data":{"IdGrupoAtendimento":"'+str(objimunizacao['DSC_PUBLICO'])+'",'\
-                                 '"IdEstrategia":"'+objimunizacao['ESTRATEGIA']+'",'\
-                                 '"IdImunobiologico":"'+objimunizacao['DSC_TIPO_VACINA']+'",'\
-                                 '"IdDose":"'+objimunizacao['NUM_DOSE_VACINA']+'",'\
-                                 '"DataVacinacao":"'+objimunizacao['DTA_COMPARECIMENTO_PESSOA']+'",'\
-                                 '"DataAprazamento":"'+objimunizacao['DTA_APRAZAMENTO']+'",'\
-                                 '"IdLote":"'+objimunizacao['NUM_LOTE_VACINA']+'",'\
-                                 '"IdViaAdministracao":"'+objimunizacao['VIA_ADMINISTRACAO']+'",'\
-                                 '"IdLocalAplicacao":"'+objimunizacao['LOCAL_APLICACAO']+'",'\
-                                 '"IdVacinador":"'+objimunizacao['VACINADOR']+'",'\
-                                 '"IdPaciente":"'+objimunizacao['ID_PACIENTE']+'",'\
-                                 '"IdEstabelecimento":"'+objimunizacao['ESTABELECIMENTO']+'"},'\
-                                 '"AccessToken":"'+self.login_token+'"}'
+        }
+        if (objimunizacao['DSC_COMORBIDADES'] != "null") :
+            imunizar_json["IdComorbidade"]          = [ objimunizacao["COMORBSTRING"] ],
+            imunizar_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"],
+            imunizar_json["VacinacaoComorbidade"]   = [ objimunizacao["COMORBDICT"] ],
+            imunizar_json["DescricaoBPC"]           = None
+
+
+        self.data_imunizar = {
+            "Data":imunizar_json,
+            "AccessToken":self.login_token
+        }
 
         time.sleep(5)
         # print("LOG - DATA IMUNIZAR = "+ self.data_imunizar)
         response_imunizar = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-Vacinacao',
-                                          headers=self.headers, data=self.data_imunizar, timeout=500)
+                                          headers=self.headers, json=self.data_imunizar, timeout=500)
         time.sleep(5)
         # print(response_imunizar)
         self.response_imunizar = response_imunizar
