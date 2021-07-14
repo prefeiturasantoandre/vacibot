@@ -984,6 +984,10 @@ def fetch_lotes(login):
     print("Scrapper de lotes ", auth_message)
     
     resp = ray.get(response_future)
+
+    #salva lotes p/ consulta
+    with open("lotes.json", "w") as fp:
+        json.dump(resp, fp, indent=4)
     
     for vacina in resp:
         for lote in (vacina[1]):

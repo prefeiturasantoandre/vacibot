@@ -131,6 +131,7 @@ dmypy.json
 # application
 credentials.py
 local_dicts.py
+lotes.json
 
 # IDE
 .vscode/
