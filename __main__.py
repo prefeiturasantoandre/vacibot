@@ -371,6 +371,10 @@ class RegisterBatch() :
 
                     if self.dict['NUM_LOTE_VACINA'] == None:
                         print( f"Lote não identificado para {key}: {lote}" )
+                        
+                        #salva lotes c/ erro p/ consulta
+                        with open("lotes_erro.csv", "a") as fp:
+                            fp.write(f"{key},{lote},{datetime.now()}\n")
                     
                     break
             if not found:    
