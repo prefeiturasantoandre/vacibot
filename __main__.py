@@ -364,9 +364,14 @@ class RegisterBatch() :
             found = False
             for key in di.vacina_id:
                 if self.dict['DSC_TIPO_VACINA'] in key or key in self.dict['DSC_TIPO_VACINA']:  #key = fabricante da vacina
+                    lote = self.dict['NUM_LOTE_VACINA']
                     self.dict['DSC_TIPO_VACINA'] = di.vacina_id[key]
-                    self.dict['NUM_LOTE_VACINA'] = lotes[key].get(self.dict['NUM_LOTE_VACINA'])
+                    self.dict['NUM_LOTE_VACINA'] = lotes[key].get(lote)
                     found = True
+
+                    if self.dict['NUM_LOTE_VACINA'] == None:
+                        print( f"Lote não identificado para {key}: {lote}" )
+                    
                     break
             if not found:    
                 print("Vacina não identificada: ", self.dict['DSC_TIPO_VACINA'])
