@@ -537,27 +537,32 @@ class Vacivida_Sys :
         # faz leitura do token e salva como variavel
         self.login_token = self.login_token['Data']
 
-        self.headers = {
-            'Connection' : 'keep-alive',
-            'TKP' : '0',
-            'AccessToken' : self.login_token,
-            'sec-ch-ua-mobile' : '?0',
-            'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36',
-            'Content-Type' : 'application/json',
-            'access-control-allow-origin' : 'http://portalvacivida.sp.gov.br/',
-            'Accept' : 'application/json, text/plain, */*',
-            'sec-ch-ua' : '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
-            'Origin' : 'https://vacivida.sp.gov.br',
-            'Sec-Fetch-Site' : 'same-site',
-            'Sec-Fetch-Mode' : 'cors',
-            'Sec-Fetch-Dest' : 'empty',
-            'Referer' : 'https://vacivida.sp.gov.br/',
-            'Accept-Language' : 'pt,en-US;q=0.9,en;q=0.8',
-        }
+        if self.login_token:
+            self.headers = {
+                'Connection' : 'keep-alive',
+                'TKP' : '0',
+                'AccessToken' : self.login_token,
+                'sec-ch-ua-mobile' : '?0',
+                'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36',
+                'Content-Type' : 'application/json',
+                'access-control-allow-origin' : 'http://portalvacivida.sp.gov.br/',
+                'Accept' : 'application/json, text/plain, */*',
+                'sec-ch-ua' : '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
+                'Origin' : 'https://vacivida.sp.gov.br',
+                'Sec-Fetch-Site' : 'same-site',
+                'Sec-Fetch-Mode' : 'cors',
+                'Sec-Fetch-Dest' : 'empty',
+                'Referer' : 'https://vacivida.sp.gov.br/',
+                'Accept-Language' : 'pt,en-US;q=0.9,en;q=0.8',
+            }
 
-        self.auth_message = "Autenticado!"
+            self.auth_message = "Autenticado!"
 
+        else:
+            self.auth_message = "Nao autenticado"
+        
         return self.get_auth_message()
+        
 
     def get_auth_message(self) :
         return self.auth_message
