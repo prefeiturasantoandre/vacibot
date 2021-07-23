@@ -129,10 +129,10 @@ dmypy.json
 .pyre/
 
 # application
-credentials.py
-local_dicts.py
-lotes.json
-lotes_erro.csv
+vacibot/credentials.py
+vacibot/local_dicts.py
+vacibot/lotes.json
+vacibot/lotes_erro.csv
 
 # IDE
 .vscode/
