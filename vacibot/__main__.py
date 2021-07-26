@@ -513,10 +513,14 @@ while True :
         alias = di.area_alias[area]     #diferentes areas (DSC_AREA) representam o mesmo local (alias)
 
         if len(list_seq_agenda) != 0 and di.vacinador[alias] != "" and di.estabelecimento[alias] != "":
-            registers_to_send = CreateRegistersToSend(list_to_send)
+            registers_to_send = CreateRegistersToSend(list_to_send)            
             
-            #inicializa os actors Filler com tempo de vida indefinido e agrega os novos Actor_handles de Filler_remote à lista
-            filler_handles += [Filler_remote.options(lifetime="detached").remote(j, registers_to_send, login_vacivida[alias], run=True) for j in range(n_workers)]
+            # inicializa os actors Filler
+            handles = [Filler_remote.remote(j, registers_to_send, login_vacivida[alias], run=False) for j in range(n_workers)]
+            [h.run.remote() for h in handles]
+
+            # agrega os novos Actor_handles de Filler_remote à lista para manter a referência e manter os Actors vivos
+            filler_handles += handles
             
             new_messages = ray.get(message_actor.get_and_clear_messages.remote())
             print("New messages:", new_messages)
