@@ -24,6 +24,7 @@ import sys
 from credentials import connection_params
 from credentials import login_vacivida
 import dicts as di
+from settings import db
 
 from vacivida import Vacivida_Sys
 Vacivida_Sys = ray.remote(Vacivida_Sys)
