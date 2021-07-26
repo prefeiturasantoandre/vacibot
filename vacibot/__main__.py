@@ -24,14 +24,14 @@ import sys
 from credentials import connection_params
 from credentials import login_vacivida
 import dicts as di
-from settings import db
-
+from settings import db, MAX_RETRY
 from vacivida import Vacivida_Sys
-Vacivida_Sys = ray.remote(Vacivida_Sys)
+
+from worker import Filler
+Filler_remote = ray.remote(Filler)
 
 # DEFINES
 n_workers = 2  # recomendado nao passar de 40 workers por credentials.py
-MAX_RETRY = 5  # attempts
 standalonemode = True
 headnodeip = '127.0.0.1:6379'
 headnodepassword = '5241590000000000'
@@ -466,184 +466,8 @@ class MessageActor(object) :
         self.messages = []
         return messages
 
-@ray.remote
-def worker(message_actor, j, cadastros_to_send, login) :
-    a = time.time()
-    d = time.time()
-    time.sleep(round(random.uniform(0, 2), 2))  # jitter aumenta tempo de espera em um numero randomico entre 0 e 1
-    vacivida = Vacivida_Sys.remote()
-    vacivida.autenticar.remote(login)
-    # print (ray.get(vacivida.get_auth_message.remote()))
-    auth_message = ray.get(vacivida.get_auth_message.remote())
-    # message_actor.add_message.remote("Worker {} = {}.".format(j, auth_message ))
-    print("Worker ", j, auth_message)
-    cadastros_worker = cadastros_to_send[j]
-    time.sleep(2)
-    for i in cadastros_worker :
-        d = time.time()
-
-        # habilita loop de autenticacao a cada d-a segundos
-        if (d-a > 1800) :
-            time.sleep(
-                round(random.uniform(0, 2), 2))  # jitter aumenta tempo de espera em um numero randomico entre 0 e 1
-            d = time.time()
-            a = time.time()
-            print("Passaram 30min, fazendo nova autenticacao para o Worker ", j)
-            vacivida.autenticar.remote(login)
-            auth_message = ray.get(vacivida.get_auth_message.remote())
-            print("Worker ", j, auth_message)
-            cadastros_worker = cadastros_to_send[j]
-
-        # print(i['SEQ_AGENDA'])
-        time.sleep(1)
-        seqtoprint = i['SEQ_AGENDA']
-        cpftoprint = i['NUM_CPF']
-        # message_actor.add_message.remote(
-        #    "SEQ_AGENDA = {} , NUM_CPF = {} reading at worker {}.".format(seqtoprint, cpftoprint, j))
-
-        paciente_json_future = vacivida.consultacpf.remote(i['NUM_CPF'])
-        cadastro_status = ray.get(vacivida.get_consult_message.remote(), timeout=60)
-
-        print(cadastro_status)
-
-        if ("Usuário NÃO Cadastrado" in cadastro_status) :
-            con = cx_Oracle.connect(connection_params)
-            cur = con.cursor()
-            cur.execute(
-                f"UPDATE age_agendamento_covid set ind_vacivida_cadastro ='F' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-            # print("DEBUG - Cadastro SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para False")
-
-            cur.execute(
-                f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='F' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-            # print("DEBUG - Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para False")
-
-            con.commit()
-            con.close()
-
-            # max retry default = 5
-            for x in range(MAX_RETRY) :
-                time.sleep(3 * x)  # backoff = tentativas * multiplicacao do tmepo de espera
-                time.sleep(
-                    round(random.uniform(0, 1), 2))  # jitter aumenta tempo de espera em um numero randomico entre 0 e 1
-
-                # print("DEBUG = Cadastrar paciente = ", i)
-                vacivida.cadastrar_paciente.remote(i)
-                cadastrar_status = ray.get(vacivida.get_cadastro_message.remote(), timeout=50)
-                print(cadastrar_status)
-                if ("cadastrado" in cadastrar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_cadastro ='T' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    con.commit()
-                    con.close()
-                    break
-                # adicionar vacina a partir daqui dentro de um if
-                elif ("Erro" in cadastrar_status) :
-                    pass
-
-            # on.commit()
-            # con.close()
-
-            # update no bd que nao esta cadastrado
-        elif ("Usuário Cadastrado") in cadastro_status :
-            paciente_json = ray.get(paciente_json_future) 
-            if paciente_json["CodigoSexo"] == None:     #pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
-                print("Necessário atualizar o usuário")
-                atualizar_future = vacivida.atualizar_paciente.remote(i, paciente_json )                
-                paciente_json, atualizacao_message = ray.get(atualizar_future)
-                print(atualizacao_message)
-
-            i['ID_PACIENTE'] = paciente_json["IdPaciente"]
-            # print("DEBUG - ID_PACIENTE no vacivida= ", i['ID_PACIENTE'])
-
-            # falta inserir coluna com ID usuario para cruzar no vacivida mais rapido
-
-            con = cx_Oracle.connect(connection_params)
-            cur = con.cursor()
-            cur.execute(
-                f"UPDATE age_agendamento_covid set ind_vacivida_cadastro ='T' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-            print("Cadastro SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para True")
-            con.commit()
-            con.close()
-            time.sleep(2)
-
-            # for result in cur:
-            # print(result)
-
-            # Cadastrar Imunizacao
-            #paciente_json = ray.get(paciente_json_future)   #recebe o json atualizado
-            # comentar essa area para apenas atualizar o banco de dados
-            for x in range(MAX_RETRY) :
-                time.sleep(2 * x)  # backoff = tentativas * multiplicacao do tmepo de espera
-                time.sleep(
-                    round(random.uniform(0, 1), 2))  # jitter aumenta tempo de espera em um numero randomico entre 0 e 1
-                # print("DEBUG - Object to imunizar = ", i)
-
-                vacivida.imunizar.remote(i)
-                imunizar_status = ray.get(vacivida.get_imunizar_message.remote(), timeout=60)
-                print(imunizar_status)
-                if ("Incluído com Sucesso" in imunizar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='T' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    print("Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para True")
-                    con.commit()
-                    con.close()
-                    break
-                elif ("já tomou esta dose" in imunizar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='T' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    print("Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para True")
-                    con.commit()
-                    con.close()
-                    break
-
-                # para o caso de ja ter sido cadastrado um tipo de vacina diferente, registra no BD como "E" (erro)
-                elif ("Não é permitido que a 2ª dose da vacina seja diferente da 1ª dose CPF" in imunizar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='E' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    print("Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para Erro")
-                    con.commit()
-                    con.close()
-                    break
-
-                elif ("A primeira dose do paciente não está registrado no VaciVida." in imunizar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='I' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    print("Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para Inconsistente")
-                    con.commit()
-                    con.close()
-                    break
-
-                elif ("Não é permitido vacinar paciente menor de 18 anos de idade" in imunizar_status) :
-                    con = cx_Oracle.connect(connection_params)
-                    cur = con.cursor()
-                    cur.execute(
-                        f"UPDATE age_agendamento_covid set ind_vacivida_vacinacao ='X' where SEQ_AGENDA = {i['SEQ_AGENDA']} ")
-
-                    print("Vacinacao SEQ_AGENDA = ", i['SEQ_AGENDA'], " atualizado para Data de Nascimento Incorreto")
-                    con.commit()
-                    con.close()
-                    break
-
-                elif ("Erro" in imunizar_status) :
-                    pass
-
 def fetch_lotes(login):
-    vacivida = Vacivida_Sys.remote()
+    vacivida = ray.remote(Vacivida_Sys).remote()
     auth_future = vacivida.autenticar.remote(login)
 
     lotes_local = { key:{} for key in di.vacina_id}
@@ -669,10 +493,10 @@ def fetch_lotes(login):
 # Create a message actor.
 message_actor = MessageActor.remote()
 
-
 # Loop para reiniciar os registros a cada time.sleep(x) tempo
 # Dica: em momentos de instabilidade, pode ser interessante reduzir o tempo para apenas alguns minutos
 while True :
+    filler_handles = []
     while True:
         print("Atualizando listas de lotes")
         try:
@@ -690,12 +514,15 @@ while True :
 
         if len(list_seq_agenda) != 0 and di.vacinador[alias] != "" and di.estabelecimento[alias] != "":
             registers_to_send = CreateRegistersToSend(list_to_send)
-
-            [worker.remote(message_actor, j, registers_to_send, login_vacivida[alias]) for j in range(n_workers)]
-
+            
+            #inicializa os actors Filler com tempo de vida indefinido e agrega os novos Actor_handles de Filler_remote à lista
+            filler_handles += [Filler_remote.options(lifetime="detached").remote(j, registers_to_send, login_vacivida[alias], run=True) for j in range(n_workers)]
+            
             new_messages = ray.get(message_actor.get_and_clear_messages.remote())
             print("New messages:", new_messages)
 
             time.sleep(60)  # aguarda X segundos para despachar workers de nova area
 
+    #termina os actors e reinicia o processamento
+    [ray.kill(h) for h in filler_handles]
     time.sleep(3600)  # reinicia processos a cada X segundos

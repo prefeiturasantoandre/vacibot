@@ -133,6 +133,8 @@ vacibot/credentials.py
 vacibot/local_dicts.py
 vacibot/lotes.json
 vacibot/lotes_erro.csv
+lotes.json
+lotes_erro.csv
 
 # IDE
 .vscode/
