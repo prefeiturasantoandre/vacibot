@@ -528,5 +528,5 @@ while True :
             time.sleep(60)  # aguarda X segundos para despachar workers de nova area
 
     #termina os actors e reinicia o processamento
-    [ray.kill(h) for h in filler_handles]
     time.sleep(3600)  # reinicia processos a cada X segundos
+    [ray.kill(h) for h in filler_handles]
