@@ -59,6 +59,9 @@ class Filler():
                 self.state = 3
             elif ("Usuário Cadastrado") in cadastro_status :
                 self.state = 5
+            elif ("Token inválido" in cadastro_status):
+                # define como não autenticado e não altera o estado
+                self.authenticated = False
             else:
                 self.state = -1    
 
@@ -79,7 +82,10 @@ class Filler():
             if ("cadastrado" in cadastrar_status) :
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 #retorna à consulta p/ buscar id    #TODO: refatorar Vacivida_Sys.cadastrar_paciente() p/ retornar id
-                self.state = 2 
+                self.state = 2             
+            elif ("Token inválido." in cadastrar_status):
+                # define como não autenticado e não altera o estado
+                self.authenticated = False
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
@@ -111,6 +117,9 @@ class Filler():
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 #avança
                 self.state = 8
+            elif ("Token inválido" in atualizacao_message):
+                # define como não autenticado e não altera o estado
+                self.authenticated = False
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
@@ -142,6 +151,9 @@ class Filler():
                 self.state = 12
             elif ("Não é permitido vacinar paciente menor de 18 anos de idade" in imunizar_status) :
                 self.state = 13
+            elif ("Token inválido" in imunizar_status):
+                # define como não autenticado e não altera o estado
+                self.authenticated = False
             elif ("Erro" in imunizar_status) :
                 self.state = 14
 
