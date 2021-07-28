@@ -7,12 +7,16 @@ class Database():
         pass
     def fetch(self, table, where_col=None, where_value=None, where_op="="):
         pass
-    def update(self, table, col, value, where_col, where_value, where_op="="):
+    def update(self, table, col, value, where_col, where_value, where_op="=", *next_where):
+        pass
+    def insert(self, table, cols, values):
         pass
 
 class Database_Oracle(Database):
-    def __init__(self,connection_params=None):
+    constants = ["SYSDATE","SYSTIMESTAMP"]
+    def __init__(self,connection_params=None, default_schema=None):
         self.connection_params = None
+        self.default_schema = default_schema
         
         if connection_params:
             self.load(connection_params)
@@ -28,16 +32,17 @@ class Database_Oracle(Database):
         con.close()
 
     def fetch(self, table, where_col=None, where_value=None, where_op="="):
-        con = cx_Oracle.connect(self.connection_params)
-        cur = con.cursor()
+        if self.default_schema:
+            table = self.default_schema + "." + table
 
         query = "SELECT * FROM "+ table
 
         if where_col and where_value:
-            if isinstance(where_value ,str):
-                where_value = f"'{where_value}'"
+            where_value = self.check_value(where_value)
             query = query + " WHERE " + where_col + where_op + where_value
         
+        con = cx_Oracle.connect(self.connection_params)
+        cur = con.cursor()
         cur.execute(query)
 
         header = []
@@ -51,17 +56,39 @@ class Database_Oracle(Database):
 
         return header, rows
 
-    def update(self, table, col, value, where_col, where_value, where_op="="):
-        con = cx_Oracle.connect(self.connection_params)
-        cur = con.cursor()
+    def update(self, table, col, value, where_col, where_value, where_op="=", *next_where):
+        value = self.check_value(value)
+        where_value = self.check_value(where_value)
 
-        if isinstance(value ,str):
-                value = f"'{value}'"
-        if isinstance(where_value ,str):
-            where_value = f"'{where_value}'"
+        if self.default_schema:
+            table = self.default_schema + "." + table
 
         query = "UPDATE " + table + " SET " + col + "=" + value + " WHERE " + where_col + where_op + where_value
 
-        cur.execute(query)
-        con.commit()
-        con.close()
+        i=0
+        while len(next_where)-i >= 3:
+            where_col2   = next_where[i+0]
+            where_value2 = self.check_value( next_where[i+1] )
+            where_op2    = next_where[i+2]
+            query += " AND " + where_col2 + where_op2 + where_value2
+            i+=3
+
+        self.execute(query)
+
+    def insert(self, table, cols, values):
+        for i in range(len(values)):
+                values[i] = self.check_value(values[i])
+        
+        if self.default_schema:
+            table = self.default_schema + "." + table
+
+        query =  "INSERT INTO " + table
+        query += " ("+ ','.join(cols) +")"
+        query += " VALUES ("+ ','.join(values) +")"
+        
+        self.execute(query)
+
+    def check_value(self, value):
+        if isinstance(value ,str) and value not in self.constants:
+            value = f"'{value}'"
+        return value
