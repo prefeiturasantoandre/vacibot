@@ -529,7 +529,7 @@ def update_lotes_db(local_lotes):
     # insere lotes remanescentes no banco de dados        
     for vacina in local_lotes:
         for lote in local_lotes[vacina]:
-            db.insert("AGE_LOTE_VACINA_COVID_TESTE", ["DSC_TIPO_VACINA","NUM_LOTE_VACINA","IND_ATIVO","DTA_CRIACAO"], [vacina,lote,"S","SYSTIMESTAMP"])
+            db.insert("AGE_LOTE_VACINA_COVID", ["DSC_TIPO_VACINA","NUM_LOTE_VACINA","IND_ATIVO","DTA_CRIACAO"], [vacina,lote,"S","SYSTIMESTAMP"])
             print("Lote inserido no Banco de Dados: ", vacina,lote)
 
             #salva lotes inseridos p/ consulta
