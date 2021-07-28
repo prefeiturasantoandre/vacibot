@@ -482,13 +482,61 @@ def fetch_lotes(login):
     with open("lotes.json", "w") as fp:
         json.dump(resp, fp, indent=4)
     
+    # Preenche o dicionario lotes_local com o formato:
+    # { vacina:{cod_lote:id_lote} }
     for vacina in resp:
         for lote in (vacina[1]):
             lotes_local[vacina[0]][ lote["CodigoLote"] ] = lote["IdLote"]
 
-    # Formato do dicionario lotes_local:
-    # { vacina:{cod_lote:id_lote} }
+    #atualiza os lotes no db
+    update_lotes_db(lotes_local)
+
     return lotes_local
+
+
+#@ray.remote
+def update_lotes_db(local_lotes):
+    #cria uma cópia do dict de lotes do vacivida ao invés de usá-lo como referência
+    local_lotes = dict(local_lotes)  
+    for lote in local_lotes:
+        local_lotes[lote] = dict(local_lotes[lote])
+
+    #substitui a(s) chave(s) do dict pela equivalente no DB
+    local_lotes['AstraZeneca/Fiocruz'] = local_lotes.pop('AstraZeneca') 
+
+    #busca os lotes ativos no db
+    headers, rows = db.fetch("AGE_LOTE_VACINA_COVID", "IND_ATIVO", "S")
+
+    #busca os indices dos cabecalhos
+    vacina_i = headers.index("DSC_TIPO_VACINA")
+    lote_i   = headers.index("NUM_LOTE_VACINA")
+
+    for row in rows:    #para cada linha do banco de dados
+        # verifica se existe equivalente no vacivida
+        if row[lote_i] in local_lotes[row[vacina_i]]:
+            # remove o lote do dicionário do vacivida
+            local_lotes[row[vacina_i]].pop( row[lote_i] )
+        else:
+            # desativa o lote no banco de dados
+            db.update("AGE_LOTE_VACINA_COVID", "IND_ATIVO", "N", "DSC_TIPO_VACINA", row[vacina_i], "=", "NUM_LOTE_VACINA", row[lote_i], "=")
+            print("Lote desabilitado no Banco de Dados: ", row[vacina_i], row[lote_i])
+
+            #salva lotes c/ erro p/ consulta
+            with open("lotes_desativados.csv", "a") as fp:
+                fp.write(f"{row[vacina_i]},{row[lote_i]},{datetime.now()}\n")
+
+            
+    # insere lotes remanescentes no banco de dados        
+    for vacina in local_lotes:
+        for lote in local_lotes[vacina]:
+            db.insert("AGE_LOTE_VACINA_COVID_TESTE", ["DSC_TIPO_VACINA","NUM_LOTE_VACINA","IND_ATIVO","DTA_CRIACAO"], [vacina,lote,"S","SYSTIMESTAMP"])
+            print("Lote inserido no Banco de Dados: ", vacina,lote)
+
+            #salva lotes inseridos p/ consulta
+            with open("lotes_inseridos.csv", "a") as fp:
+                fp.write(f"{vacina},{lote},{datetime.now()}\n")
+
+
 
 # Create a message actor.
 message_actor = MessageActor.remote()
@@ -503,7 +551,7 @@ while True :
             lotes = fetch_lotes( list(login_vacivida.values())[0] )     #utiliza o login da primeira unidade
             print("Lista de lotes atualizada")
             break
-        except:
+        except Exception as e:
             print("Não foi possível atualizar lista de lotes.")
         time.sleep(60)
 
