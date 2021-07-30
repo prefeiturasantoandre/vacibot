@@ -1,6 +1,8 @@
-import time
+import time, logging
 from vacivida import Vacivida_Sys
 from settings import db, MAX_RETRY
+
+logging.basicConfig(filename="logs/worker.log", level=logging.ERROR)
 
 class Filler():
     def __init__(self, id, cadastros_to_send, login, run=False):
@@ -27,9 +29,10 @@ class Filler():
             while self.state not in (99,-1):         #99 = finalizado | -1 = erro
                 try:
                     self.step()
-                except:
+                except Exception as e:
                     self.state = -1
                     print ("CRITICAL - Um Exception lançado no processamento do cadastro.")
+                    logging.exception(f"CRITICAL - Um Exception lançado no processamento do cadastro: {self.working_entry}")
         return True
             
     def step(self):
@@ -98,7 +101,7 @@ class Filler():
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
         elif self.state == 5:
             if self.paciente_json["CodigoSexo"] == None:     #pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
-                print("Necessário atualizar o usuário")
+                print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
                 self.state = 6
             else:
                 self.state = 8
