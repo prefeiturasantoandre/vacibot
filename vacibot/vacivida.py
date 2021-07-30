@@ -4,7 +4,7 @@ from dicts import vacina_id
 def parse_paciente_json(objpaciente, id_paciente=""):
     paciente_json = {
         "PesqCNS_CPF":objpaciente['NUM_CPF'],
-        "CNS":None,
+        "CNS":objpaciente['NUM_CNS'],
         "CPF": objpaciente['NUM_CPF'],
         "Nome":objpaciente['DSC_NOME'],
         "NomeMae":objpaciente['DSC_NOME_MAE'],
@@ -64,15 +64,15 @@ class Vacivida_Sys :
             'Referer' : 'https://vacivida.sp.gov.br/',
             'Accept-Language' : 'pt,en-US;q=0.9,en;q=0.8',
         }
-        self.data = login
+        data = login
         response_login = requests.post('https://servico.vacivida.sp.gov.br/Usuario/Logar', headers=self.headers,
-                                       data=self.data)
+                                       data=data)
 
         # transforma resposta em chaves
-        self.login_token = json.loads(response_login.text)
+        resp_text = json.loads(response_login.text)
 
         # faz leitura do token e salva como variavel
-        self.login_token = self.login_token['Data']
+        self.login_token = resp_text['Data']
 
         if self.login_token:
             self.headers = {
@@ -282,7 +282,7 @@ class Vacivida_Sys :
                 paciente_json["IdPaciente"] = id_paciente
         else:
             paciente_json["PesqCNS_CPF"] = objpaciente['NUM_CPF']
-            paciente_json["CNS"] = None
+            paciente_json["CNS"] = objpaciente['NUM_CNS']
             paciente_json["CPF"] =  objpaciente['NUM_CPF']
             paciente_json["Nome"] = objpaciente['DSC_NOME']
             paciente_json["NomeMae"] = objpaciente['DSC_NOME_MAE']
@@ -306,8 +306,10 @@ class Vacivida_Sys :
             paciente_json["Estrangeiro"] = False
             #paciente_json["IdPaciente"] = id_paciente          #utilizar o id do json passado como parâmetro
             paciente_json["NumeroTelefone"] = objpaciente['NUM_TELEFONE_DDD'] + objpaciente['NUM_TELEFONE_NUM']
-            paciente_json["Telefones"][0]["DDD"] = objpaciente['NUM_TELEFONE_DDD']
-            paciente_json["Telefones"][0]["Telefone"] = objpaciente['NUM_TELEFONE_NUM']
+            if paciente_json["Telefones"]:
+                paciente_json["Telefones"][0] = self.atualizar_telefone_paciente( paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM'], paciente_json["Telefones"][0]["IdPacienteTelefone"] )
+            else:
+                paciente_json["Telefones"] = [ self.atualizar_telefone_paciente(paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM']) ]
 
         data = {
             "Data":paciente_json,
@@ -319,7 +321,6 @@ class Vacivida_Sys :
 
         resp = requests.put('https://servico.vacivida.sp.gov.br/Paciente/atualizar-paciente',
                                          headers=self.headers, json=data, timeout=500)
-        time.sleep(5)
         resp_text = json.loads(resp.text) 
 
         if (resp_text['ValidationSummary'] != None) :
@@ -335,10 +336,38 @@ class Vacivida_Sys :
         return resp_text["Data"], atualizacao_message  #return paciente_json da response
 
     def get_lotes_vacina(self, vacina):
-        vac_id = vacina_id[vacina]
-        #TODO     
+        vac_id = vacina_id[vacina]     
         resp = requests.get('https://servico.vacivida.sp.gov.br/Cadastro/consulta-lote/'+vac_id,
                                          headers=self.headers, timeout=500)
         resp_text = json.loads(resp.text) 
         # print(json.dumps(resp_text, indent=4))
         return vacina, resp_text["Data"]
+
+    def atualizar_telefone_paciente(self, id_paciente, ddd, phone, id_paciente_telefone=None):
+        telefone_json = {
+            "IdPacienteTelefone":id_paciente_telefone,
+            "IdPaciente":id_paciente,
+            "DDD":str(ddd),
+            "Telefone":str(phone)
+        }
+
+        data = {
+            "Data":telefone_json,
+            "AccessToken":self.login_token
+        }
+
+        resp = requests.put('https://servico.vacivida.sp.gov.br/Paciente/atualizar-telefone-paciente',
+                                         headers=self.headers, json=data, timeout=500)
+        resp_text = json.loads(resp.text) 
+
+        #TODO
+        if (resp_text['ValidationSummary'] != None) :
+            # print(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+            atualizacao_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Telefone Atualizado com Sucesso" in resp_text['Message']) :
+            # print("Atualizado com sucesso")
+            atualizacao_message = str(resp_text['Message'])
+        else:
+            atualizacao_message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
+
+        return resp_text["Data"], atualizacao_message  #return telefone_json da response
