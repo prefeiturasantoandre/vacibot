@@ -108,7 +108,7 @@ class RegisterBatch() :
                          self.list_index[2] : str(list_agenda_line[2]),  # 'DSC_NOME'
                          self.list_index[3] : str(list_agenda_line[3]),  # 'NUM_CPF'
                          self.list_index[4] : str(list_agenda_line[4]),  # 'DSC_NOME_MAE'
-                         self.list_index[5] : str(list_agenda_line[5]),  # 'NUM_CNS'
+                         self.list_index[5] : list_agenda_line[5],  # 'NUM_CNS'
                          self.list_index[6] : list_agenda_line[6],  # 'DTA_NASCIMENTO'
                          self.list_index[7] : str(list_agenda_line[7]),  # 'NUM_TELEFONE'
                          self.list_index[8] : str(list_agenda_line[8]),  # 'DSC_EMAIL'
