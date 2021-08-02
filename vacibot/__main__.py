@@ -489,14 +489,13 @@ def fetch_lotes(login):
             lotes_local[vacina[0]][ lote["CodigoLote"] ] = lote["IdLote"]
 
     #atualiza os lotes no db
-    update_lotes_db(lotes_local)
+    ray.remote(update_lotes_db).remote(lotes_local)
 
     return lotes_local
 
-
-#@ray.remote
 def update_lotes_db(local_lotes):
     #cria uma cópia do dict de lotes do vacivida ao invés de usá-lo como referência
+    print("Atualizando lista de lotes no Banco de Dados")
     local_lotes = dict(local_lotes)  
     for lote in local_lotes:
         local_lotes[lote] = dict(local_lotes[lote])
@@ -536,6 +535,7 @@ def update_lotes_db(local_lotes):
             with open("lotes_inseridos.csv", "a") as fp:
                 fp.write(f"{vacina},{lote},{datetime.now()}\n")
 
+    print("Lista de lotes no Banco de Dados atualizada.")
 
 
 # Create a message actor.
@@ -564,6 +564,7 @@ while True :
             registers_to_send = CreateRegistersToSend(list_to_send)            
             
             # inicializa os actors Filler
+            #Filler(0,registers_to_send, login_vacivida[alias], run=True)        #debug
             handles = [Filler_remote.remote(j, registers_to_send, login_vacivida[alias], run=False) for j in range(n_workers)]
             [h.run.remote() for h in handles]
 
