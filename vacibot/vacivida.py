@@ -273,10 +273,10 @@ class Vacivida_Sys :
         return self.imunizar_message
 
   # 6. Atualizar cadastro do paciente
-    def atualizar_paciente(self, objpaciente, paciente_json=None, id_paciente=None) :    #obricatório paciente_json OU id_paciente
+    def atualizar_paciente(self, objpaciente, paciente_json=None, id_paciente=None) :    #obrigatório paciente_json OU id_paciente
         if paciente_json == None:
             if id_paciente == None:
-                return False
+                return None, f"Erro ao atualizar paciente. CPF: {objpaciente['NUM_CPF']}"
             else:
                 paciente_json = parse_paciente_json(objpaciente)
                 paciente_json["IdPaciente"] = id_paciente

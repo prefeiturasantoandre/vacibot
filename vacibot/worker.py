@@ -24,7 +24,7 @@ class Filler():
         while self.cadastros_worker:        #enquanto houver cadastros não inseridos
             self.working_entry = self.cadastros_worker.pop(0)
             self.state = 1
-            self.paciente_json = None
+            self.working_paciente_json = None
             self.remaining_retry = 0
             while self.state not in (99,-1):         #99 = finalizado | -1 = erro
                 try:
@@ -54,7 +54,7 @@ class Filler():
         
         # ESTADO 2 - consulta o CPF
         elif self.state == 2:
-            self.paciente_json = self.vacivida.consultacpf(self.working_entry['NUM_CPF'])
+            self.working_paciente_json = self.vacivida.consultacpf(self.working_entry['NUM_CPF'])
             cadastro_status = self.vacivida.get_consult_message()
             print(cadastro_status)
 
@@ -100,7 +100,7 @@ class Filler():
 
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
         elif self.state == 5:
-            if self.paciente_json["CodigoSexo"] == None:     #pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
+            if self.working_paciente_json["CodigoSexo"] == None:     #pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
                 print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
                 self.state = 6
             else:
@@ -113,7 +113,7 @@ class Filler():
 
         # ESTADO 7 - loop de atualização do paciente
         elif self.state == 7:           
-            self.paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.paciente_json )                
+            self.working_paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.working_paciente_json )                
             print(atualizacao_message)
 
             if ("atualizado" in atualizacao_message) :
@@ -133,7 +133,7 @@ class Filler():
 
         # ESTADO 8 - inicia loop p/. tentar cadastrar imunização
         elif self.state == 8:
-            self.working_entry['ID_PACIENTE'] = self.paciente_json["IdPaciente"]
+            self.working_entry['ID_PACIENTE'] = self.working_paciente_json["IdPaciente"]
 
             self.remaining_retry = MAX_RETRY -1
             self.state = 9
