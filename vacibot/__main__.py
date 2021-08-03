@@ -539,7 +539,7 @@ def update_lotes_db(local_lotes):
 
 
 # Create a message actor.
-message_actor = MessageActor.remote()
+#message_actor = MessageActor.remote()
 
 # Loop para reiniciar os registros a cada time.sleep(x) tempo
 # Dica: em momentos de instabilidade, pode ser interessante reduzir o tempo para apenas alguns minutos
@@ -571,8 +571,8 @@ while True :
             # agrega os novos Actor_handles de Filler_remote à lista para manter a referência e manter os Actors vivos
             filler_handles += handles
             
-            new_messages = ray.get(message_actor.get_and_clear_messages.remote())
-            print("New messages:", new_messages)
+            #new_messages = ray.get(message_actor.get_and_clear_messages.remote())
+            #print("New messages:", new_messages)
 
             time.sleep(60)  # aguarda X segundos para despachar workers de nova area
 
