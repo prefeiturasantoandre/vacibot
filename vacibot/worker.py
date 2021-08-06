@@ -29,6 +29,7 @@ class Filler():
             while self.state not in (99,-1):         #99 = finalizado | -1 = erro
                 try:
                     self.step()
+                    #print(self.id,self.vacivida.login_token[-44:])     #debug
                 except Exception as e:
                     self.state = -1
                     print ("CRITICAL - Um Exception lançado no processamento do cadastro.")
@@ -86,13 +87,14 @@ class Filler():
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 #retorna à consulta p/ buscar id    #TODO: refatorar Vacivida_Sys.cadastrar_paciente() p/ retornar id
                 self.state = 2             
-            elif ("Token inválido." in cadastrar_status):
-                # define como não autenticado e não altera o estado
-                self.authenticated = False
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
+
+                #verifica se o erro foi de token inválido e define como não autenticado
+                if ("Token inválido." in cadastrar_status):
+                    self.authenticated = False
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
@@ -120,13 +122,14 @@ class Filler():
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 #avança
                 self.state = 8
-            elif ("Token inválido" in atualizacao_message):
-                # define como não autenticado e não altera o estado
-                self.authenticated = False
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
+
+                #verifica se o erro foi de token inválido e define como não autenticado
+                if ("Token inválido." in atualizacao_message):
+                    self.authenticated = False
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
@@ -154,9 +157,6 @@ class Filler():
                 self.state = 12
             elif ("Não é permitido vacinar paciente menor de 18 anos de idade" in imunizar_status) :
                 self.state = 13
-            elif ("Token inválido" in imunizar_status):
-                # define como não autenticado e não altera o estado
-                self.authenticated = False
             elif ("Erro" in imunizar_status) :
                 self.state = 14
 
@@ -164,6 +164,10 @@ class Filler():
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
+                
+                #verifica se o erro foi de token inválido e define como não autenticado
+                if ("Token inválido." in imunizar_status):
+                    self.authenticated = False
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
