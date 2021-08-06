@@ -72,9 +72,9 @@ class Vacivida_Sys :
         resp_text = json.loads(response_login.text)
 
         # faz leitura do token e salva como variavel
-        self.login_token = resp_text['Data']
 
-        if self.login_token:
+        if resp_text['Data']:
+            self.login_token = resp_text['Data']
             self.headers = {
                 'Connection' : 'keep-alive',
                 'TKP' : '0',
