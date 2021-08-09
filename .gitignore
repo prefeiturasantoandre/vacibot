@@ -134,9 +134,7 @@ vacibot/local_dicts.py
 vacibot/lotes.json
 vacibot/lotes_erro.csv
 lotes.json
-lotes_erro.csv
-lotes_desativados.csv
-lotes_inseridos.csv
+*.csv
 
 # IDE
 .vscode/

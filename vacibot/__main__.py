@@ -377,7 +377,7 @@ class RegisterBatch() :
                         print( f"Lote não identificado para {key}: {lote}" )
                         
                         #salva lotes c/ erro p/ consulta
-                        with open("lotes_erro.csv", "a") as fp:
+                        with open("logs/lotes_erro.csv", "a") as fp:
                             fp.write(f"{key},{lote},{datetime.now()}\n")
                     
                     break
@@ -479,7 +479,7 @@ def fetch_lotes(login):
     resp = ray.get(response_future)
 
     #salva lotes p/ consulta
-    with open("lotes.json", "w") as fp:
+    with open("logs/lotes.json", "w") as fp:
         json.dump(resp, fp, indent=4)
     
     # Preenche o dicionario lotes_local com o formato:
@@ -528,7 +528,7 @@ def update_lotes_db(local_lotes):
                 print("Lote desabilitado no Banco de Dados: ", row[vacina_i], row[lote_i])
 
                 #salva lotes c/ erro p/ consulta
-                with open("lotes_desativados.csv", "a") as fp:
+                with open("logs/lotes_desativados.csv", "a") as fp:
                     fp.write(f"{row[vacina_i]},{row[lote_i]},{datetime.now()}\n")
 
             
@@ -541,7 +541,7 @@ def update_lotes_db(local_lotes):
                 print("Lote reativado no Banco de Dados: ", vacina,lote)
 
                 #salva lotes reativados p/ consulta
-                with open("lotes_reativados.csv", "a") as fp:
+                with open("logs/lotes_reativados.csv", "a") as fp:
                     fp.write(f"{vacina},{lote},{datetime.now()}\n")
             else:
                 # se o lote não existir no banco de dados, inserí-lo
@@ -549,7 +549,7 @@ def update_lotes_db(local_lotes):
                 print("Lote inserido no Banco de Dados: ", vacina,lote)
 
                 #salva lotes inseridos p/ consulta
-                with open("lotes_inseridos.csv", "a") as fp:
+                with open("logs/lotes_inseridos.csv", "a") as fp:
                     fp.write(f"{vacina},{lote},{datetime.now()}\n")
 
     print("Lista de lotes no Banco de Dados atualizada.")
