@@ -494,8 +494,9 @@ def fetch_lotes(login):
     return lotes_local
 
 def update_lotes_db(local_lotes):
-    #cria uma cópia do dict de lotes do vacivida ao invés de usá-lo como referência
     print("Atualizando lista de lotes no Banco de Dados")
+
+    #cria uma cópia do dict de lotes do vacivida ao invés de usá-lo como referência
     local_lotes = dict(local_lotes)  
     for lote in local_lotes:
         local_lotes[lote] = dict(local_lotes[lote])
@@ -503,37 +504,53 @@ def update_lotes_db(local_lotes):
     #substitui a(s) chave(s) do dict pela equivalente no DB
     local_lotes['AstraZeneca/Fiocruz'] = local_lotes.pop('AstraZeneca') 
 
-    #busca os lotes ativos no db
-    headers, rows = db.fetch("AGE_LOTE_VACINA_COVID", "IND_ATIVO", "S")
+    #define tabela de lotes
+    lotes_table = "AGE_LOTE_VACINA_COVID"
+
+    #busca os lotes no db
+    headers, rows = db.fetch(lotes_table)
 
     #busca os indices dos cabecalhos
     vacina_i = headers.index("DSC_TIPO_VACINA")
     lote_i   = headers.index("NUM_LOTE_VACINA")
+    ativo_i  = headers.index("IND_ATIVO")
 
     for row in rows:    #para cada linha do banco de dados
-        # verifica se existe equivalente no vacivida
-        if row[lote_i] in local_lotes[row[vacina_i]]:
-            # remove o lote do dicionário do vacivida
-            local_lotes[row[vacina_i]].pop( row[lote_i] )
-        else:
-            # desativa o lote no banco de dados
-            db.update("AGE_LOTE_VACINA_COVID", "IND_ATIVO", "N", "DSC_TIPO_VACINA", row[vacina_i], "=", "NUM_LOTE_VACINA", row[lote_i], "=")
-            print("Lote desabilitado no Banco de Dados: ", row[vacina_i], row[lote_i])
+        if row[ativo_i] == "S":
+            # se a linha estiver ativa
+            # verifica se existe equivalente no vacivida
+            if row[lote_i] in local_lotes[row[vacina_i]]:
+                # remove o lote do dicionário do vacivida
+                local_lotes[row[vacina_i]].pop( row[lote_i] )
+            else:
+                # desativa o lote no banco de dados
+                db.update(lotes_table, "IND_ATIVO", "N", "DSC_TIPO_VACINA", row[vacina_i], "=", "NUM_LOTE_VACINA", row[lote_i], "=")
+                print("Lote desabilitado no Banco de Dados: ", row[vacina_i], row[lote_i])
 
-            #salva lotes c/ erro p/ consulta
-            with open("lotes_desativados.csv", "a") as fp:
-                fp.write(f"{row[vacina_i]},{row[lote_i]},{datetime.now()}\n")
+                #salva lotes c/ erro p/ consulta
+                with open("lotes_desativados.csv", "a") as fp:
+                    fp.write(f"{row[vacina_i]},{row[lote_i]},{datetime.now()}\n")
 
             
     # insere lotes remanescentes no banco de dados        
     for vacina in local_lotes:
         for lote in local_lotes[vacina]:
-            db.insert("AGE_LOTE_VACINA_COVID", ["DSC_TIPO_VACINA","NUM_LOTE_VACINA","IND_ATIVO","DTA_CRIACAO"], [vacina,lote,"S","SYSTIMESTAMP"])
-            print("Lote inserido no Banco de Dados: ", vacina,lote)
+            if list(  filter(lambda row: row[ativo_i] == "N" and row[vacina_i] == vacina and row[lote_i] == lote, rows)  ):
+                # se o lote estiver desativado no banco de dados, reativá-lo
+                db.update(lotes_table, "IND_ATIVO", "S", "DSC_TIPO_VACINA", vacina, "=", "NUM_LOTE_VACINA", lote, "=")
+                print("Lote reativado no Banco de Dados: ", vacina,lote)
 
-            #salva lotes inseridos p/ consulta
-            with open("lotes_inseridos.csv", "a") as fp:
-                fp.write(f"{vacina},{lote},{datetime.now()}\n")
+                #salva lotes reativados p/ consulta
+                with open("lotes_reativados.csv", "a") as fp:
+                    fp.write(f"{vacina},{lote},{datetime.now()}\n")
+            else:
+                # se o lote não existir no banco de dados, inserí-lo
+                db.insert(lotes_table, ["DSC_TIPO_VACINA","NUM_LOTE_VACINA","IND_ATIVO","DTA_CRIACAO"], [vacina,lote,"S","SYSTIMESTAMP"])
+                print("Lote inserido no Banco de Dados: ", vacina,lote)
+
+                #salva lotes inseridos p/ consulta
+                with open("lotes_inseridos.csv", "a") as fp:
+                    fp.write(f"{vacina},{lote},{datetime.now()}\n")
 
     print("Lista de lotes no Banco de Dados atualizada.")
 
