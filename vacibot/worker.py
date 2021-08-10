@@ -91,10 +91,14 @@ class Filler():
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
-
-                #verifica se o erro foi de token inválido e define como não autenticado
+                
+                # verifica o erro
+                # erro de token inválido: define como não autenticado
                 if ("Token inválido." in cadastrar_status):
-                    self.authenticated = False
+                    self.authenticated = False                
+                # erro de formatação do CNS: descarta o CNS
+                elif ("O CNS do paciente é obrigatório e deve conter 15 dígitos" in cadastrar_status):
+                    self.working_entry['NUM_CNS'] = None
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
