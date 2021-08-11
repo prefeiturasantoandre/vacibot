@@ -1,13 +1,14 @@
-import time, logging
+import time, logging, ray, asyncio
 from vacivida import Vacivida_Sys
-from settings import db, MAX_RETRY
+from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT
 
 logging.basicConfig(filename="logs/worker.log", level=logging.ERROR)
 
 class Filler():
-    def __init__(self, id, cadastros_to_send, login, run=False):
+    def __init__(self, id, area, cadastros, login, run=False):
         self.id = id
-        self.cadastros_worker = cadastros_to_send[id]
+        self.area = area
+        self.cadastros_worker = cadastros
         self.login = login
         self.authenticated = False
         self.vacivida = Vacivida_Sys()
@@ -21,7 +22,18 @@ class Filler():
 
 
     def run(self):
-        while self.cadastros_worker:        #enquanto houver cadastros não inseridos
+        while True:        # roda enquanto houver cadastros não inseridos no vacivida
+            if not self.cadastros_worker:
+                # se a lista de cadastros está vazia, solicita mais cadastros ao Supervisor
+                print("Requisitando novos cadastros ao supervisor")
+                supervisor = ray.get_actor(f"{self.area}.supervisor")
+                new_entries = ray.get( supervisor.pop_entries.remote() )
+                self.cadastros_worker.extend(new_entries)
+
+                # se o supervisor não devolver novos cadastros, sai do loop
+                if not self.cadastros_worker:
+                    print("Lista de cadastros finalizada")
+                    break
             self.working_entry = self.cadastros_worker.pop(0)
             self.state = 1
             self.working_paciente_json = None
@@ -218,3 +230,31 @@ class Filler():
             self.auth_time = time.time()
         else:
             time.sleep(5)
+
+class Supervisor():
+    def __init__(self, area, cadastros, login, run=False):
+        self.area = area
+        self.queue = cadastros
+        self.login = login
+        self.fillers = []
+
+        print("Inicializando supervisor de ", self.area)
+
+    async def run(self, n_workers):
+        Filler_remote = ray.remote(Filler)
+
+        while (True):
+            if len(self.fillers) < n_workers:
+                # inicializa os actors Filler
+                #Filler(0,registers_to_send, login_vacivida[alias], run=True)        #debug
+                handles = [Filler_remote.remote(j, self.area, self.pop_entries(), self.login, run=False) for j in range(n_workers-len(self.fillers))]
+                [h.run.remote() for h in handles]
+
+                # agrega os novos Actor_handles de Filler_remote à lista para manter a referência e manter os Actors vivos
+                self.fillers += handles
+
+            await asyncio.sleep(DISPATCHER_WAIT)
+
+    def pop_entries(self, n=WORKING_QUEUE):
+        entries = []
+        [ entries.append(self.queue.pop(0)) for _ in range( min(n, len(self.queue)) )  ]

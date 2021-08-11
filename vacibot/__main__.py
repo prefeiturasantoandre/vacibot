@@ -27,8 +27,9 @@ import dicts as di
 from settings import db, MAX_RETRY
 from vacivida import Vacivida_Sys
 
-from worker import Filler
+from worker import Filler, Supervisor
 Filler_remote = ray.remote(Filler)
+Supervisor_remote = ray.remote(Supervisor)
 
 # DEFINES
 n_workers = 2  # recomendado nao passar de 40 workers por credentials.py
@@ -440,7 +441,7 @@ class RegisterBatch() :
 
 
 # Cria e transforma objetos Cadastros em listas para poder enviar para o worker depois:
-def CreateRegistersToSend(list_to_send) :
+def CreateRegistersToSend(list_to_send) :   #legado
     registers_to_send = []
     cadastros = []
 
@@ -451,6 +452,12 @@ def CreateRegistersToSend(list_to_send) :
         registers_to_send.append(cadastros[i].get_list_agenda_parsed_full())
 
     return registers_to_send
+
+def CreateRegistersToSend_unsplitted(list_seq_agenda) :
+    registers_to_send = []
+    cadastros = RegisterBatch(list_seq_agenda, table_index)
+    cadastros.parse_to_dict()
+    return cadastros.get_list_agenda_parsed_full()
 
 # Funcoes referentes ao Message Actor que irá distribuir as mensagens (conteudo) entre os workers
 @ray.remote
@@ -561,7 +568,7 @@ def update_lotes_db(local_lotes):
 # Loop para reiniciar os registros a cada time.sleep(x) tempo
 # Dica: em momentos de instabilidade, pode ser interessante reduzir o tempo para apenas alguns minutos
 while True :
-    filler_handles = []
+    supervisor_handles = []
     while True:
         print("Atualizando listas de lotes")
         try:
@@ -578,21 +585,15 @@ while True :
         alias = di.area_alias[area]     #diferentes areas (DSC_AREA) representam o mesmo local (alias)
 
         if len(list_seq_agenda) != 0 and di.vacinador[alias] != "" and di.estabelecimento[alias] != "":
-            registers_to_send = CreateRegistersToSend(list_to_send)            
-            
-            # inicializa os actors Filler
-            #Filler(0,registers_to_send, login_vacivida[alias], run=True)        #debug
-            handles = [Filler_remote.remote(j, registers_to_send, login_vacivida[alias], run=False) for j in range(n_workers)]
-            [h.run.remote() for h in handles]
+            #registers_to_send = CreateRegistersToSend(list_to_send)
+            cadastros_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
 
-            # agrega os novos Actor_handles de Filler_remote à lista para manter a referência e manter os Actors vivos
-            filler_handles += handles
-            
-            #new_messages = ray.get(message_actor.get_and_clear_messages.remote())
-            #print("New messages:", new_messages)
+            h = Supervisor_remote.options(name=f"{area}.supervisor").remote(alias,cadastros_parsed, login_vacivida[alias])
+            h.run.remote(n_workers)
+            supervisor_handles.append(h)
 
-            time.sleep(60)  # aguarda X segundos para despachar workers de nova area
+            time.sleep(15)  # aguarda X segundos para despachar supervisor de nova area
 
     #termina os actors e reinicia o processamento
     time.sleep(3600)  # reinicia processos a cada X segundos
-    [ray.kill(h) for h in filler_handles]
+    [ray.kill(h) for h in supervisor_handles]
