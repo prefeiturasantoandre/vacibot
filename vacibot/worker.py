@@ -258,3 +258,5 @@ class Supervisor():
     def pop_entries(self, n=WORKING_QUEUE):
         entries = []
         [ entries.append(self.queue.pop(0)) for _ in range( min(n, len(self.queue)) )  ]
+        return entries
+
