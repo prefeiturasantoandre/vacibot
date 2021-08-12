@@ -234,10 +234,15 @@ class Vacivida_Sys :
             "IdLocalAplicacao":objimunizacao["LOCAL_APLICACAO"],
             "IdVacinador":objimunizacao["VACINADOR"],
             "IdPaciente":objimunizacao["ID_PACIENTE"],
-            "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"]
-
+            "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"],
+            "IdMotivoDoseAdicional":None,
+            "IdPaisPrimeiraDose":None,
+            "IdUFPrimeiraDose":None,
+            "PrimeiraDoseOutroEstado":None,
+            "PrimeiraDoseOutroPais":None,
         }
-        if (objimunizacao['DSC_COMORBIDADES'] != "null") :
+        from dicts import grupo_id
+        if (objimunizacao['DSC_PUBLICO'] == grupo_id["COMORBIDADE"]) :
             imunizar_json["IdComorbidade"]          = [ objimunizacao["COMORBSTRING"] ],
             imunizar_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"],
             imunizar_json["VacinacaoComorbidade"]   = [ objimunizacao["COMORBDICT"] ],
