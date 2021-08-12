@@ -173,6 +173,8 @@ class Filler():
                 self.state = 12
             elif ("Não é permitido vacinar paciente menor de 18 anos de idade" in imunizar_status) :
                 self.state = 13
+            elif ("Paciente não possui 1a dose válida." in imunizar_status) :
+                self.state = 15
             elif ("Erro" in imunizar_status) :
                 self.state = 14
 
@@ -216,6 +218,13 @@ class Filler():
         elif self.state == 14:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "Y", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
             print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Outros Erros")
+            self.state = 99
+            
+        # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
+        elif self.state == 15:
+            # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
+            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "NUM_CPF",self.working_entry["NUM_CPF"])                   
+            print("Vacinacoes de NUM_CPF = ", self.working_entry['NUM_CPF'], " atualizado para Falso")
             self.state = 99
             
         else:
