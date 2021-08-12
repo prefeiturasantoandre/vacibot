@@ -145,7 +145,10 @@ class Filler():
 
                 #verifica se o erro foi de token inválido e define como não autenticado
                 if ("Token inválido." in atualizacao_message):
-                    self.authenticated = False
+                    self.authenticated = False    
+                # erro de formatação do CNS: descarta o CNS
+                elif ("O CNS do paciente é obrigatório e deve conter 15 dígitos" in atualizacao_message):
+                    self.working_entry['NUM_CNS'] = None
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
