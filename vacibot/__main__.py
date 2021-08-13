@@ -217,7 +217,7 @@ class RegisterBatch() :
                     pass
 
 
-            if (self.dict['NUM_CRM'] == 'None'):
+            if (self.dict['NUM_CRM'] == 'None' or self.dict['NUM_CRM'] == '0'):
                 self.dict['NUM_CRM'] = "40787"
             else:
                 self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
@@ -227,7 +227,6 @@ class RegisterBatch() :
             self.dict['ESTRATEGIA'] = "B66C4B622F6E840AE053D065C70A17A1"
             self.dict['VIA_ADMINISTRACAO'] = "B66C4B622F6B840AE053D065C70A17A1"
             self.dict['LOCAL_APLICACAO'] = "B66C4B622F25840AE053D065C70A17A1"
-            self.dict['DSC_COMORBIDADES'] = "null"
 
             # print(self.dict['DSC_AREA'])
 
@@ -246,9 +245,6 @@ class RegisterBatch() :
 
 
             self.comorblist = []
-            self.comorbstring = ''
-            self.comorbdict = ''
-
 
             # parse grupo
             if   ("IDOSOS" in self.dict['DSC_PUBLICO']) :
@@ -262,76 +258,22 @@ class RegisterBatch() :
             elif ("DEFICIÊNCIA" in self.dict['DSC_PUBLICO']) :
                 self.dict['DSC_PUBLICO'] = "C1AB0FA7CA550BEDE053D065C70ADE01"
             elif ("COMORBIDADES" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "C1AB0FA7CA540BEDE053D065C70ADE01"
-                
-                #### comorbidade parser
-                self.dict['DSC_COMORBIDADES'] = unidecode(self.dict['DSC_COMORBIDADES']).upper()
-                #if ("GESTANTE" in self.dict['DSC_COMORBIDADES'] ):
-                #    self.comorblist.append("C1BDD007AB971C7DE053D065C70A7835")
-                #if ("PUERPERA" in self.dict['DSC_COMORBIDADES'] ):
-                #    self.comorblist.append("C1BDD007AB981C7DE053D065C70A7835")
-                if ("CIRROSE" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F0AE2A1E053D065C70A072C")
-                if ("DIABETES" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F0BE2A1E053D065C70A072C")
-                if ("DOENCA RENAL CRONICA" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F0CE2A1E053D065C70A072C")
-                if ("DOENCAS CARDIOVASCULARES" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F1AE2A1E053D065C70A072C")
-                if ("HEMOGLOBINOPATIA" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F0EE2A1E053D065C70A072C")
-                if ("HIPERTENSAO" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F0FE2A1E053D065C70A072C")
-                if ("OBESIDADE GRAVE" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F12E2A1E053D065C70A072C")
-                if ("PACIENTE ONCOLOGICO" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F13E2A1E053D065C70A072C")
-                if ("HIV" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F14E2A1E053D065C70A072C")
-                if ("PNEUMOPATIA" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F15E2A1E053D065C70A072C")
-                if ("SINDROME DE DOWN" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F16E2A1E053D065C70A072C")
-                if ("TRANSPLANTADO" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F1BE2A1E053D065C70A072C")
-                if ("IMUNOSSUPRIMIDO" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F10E2A1E053D065C70A072C")
-                if ("TERAPIA RENAL" in self.dict['DSC_COMORBIDADES'] ):
-                    self.comorblist.append("C1ABF1B29F17E2A1E053D065C70A072C")
-
-                if (self.dict['DSC_COMORBIDADES'] != "None" or len(self.comorblist)==0 ):
-                    if (len(self.comorblist) == 1) :
-                        self.comorbstring = '"'+self.comorblist[0]+'"'
-                        self.comorbdict = '{"IdComorbidade":"'+self.comorblist[0]+'"}'
-                        # so copia o valor do dicionario
-                        pass
-
-                    if (len(self.comorblist) >= 2) :
-                        i = 0
-                        for id in (self.comorblist) :
-                            self.comorbstring = self.comorbstring+'"'+id+'"'
-                            self.comorbdict = self.comorbdict+'{"IdComorbidade":"'+id+'"}'
-                            i = i+1
-                            if (len(self.comorblist)-i > 0) :
-                                self.comorbstring = self.comorbstring+','
-                                self.comorbdict = self.comorbdict+','
+                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]
+                for comorb in di.comorbidade_db:
+                    #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorblist
+                    if comorb in self.dict['DSC_COMORBIDADES'] :
+                        self.comorblist.append(di.comorbidade_id[ di.comorbidade_db[comorb] ])
 
             elif ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "C1AB0FA7CA540BEDE053D065C70ADE01"  # mesmo que comorbidade
-                self.dict['DSC_COMORBIDADES'] = "C1ABF1B29F16E2A1E053D065C70A072C"
-                self.comorbstring = '"C1ABF1B29F16E2A1E053D065C70A072C"'
-                self.comorbdict = '{"IdComorbidade":"C1ABF1B29F16E2A1E053D065C70A072C"}'
+                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
+                self.comorblist.append(di.comorbidade_id["SINDROME DE DOWN"])
             elif ("HEMODIÁLISE" in self.dict['DSC_PUBLICO']) :
                 # hemodialise -> doenca renal cronica
-                self.dict['DSC_PUBLICO'] = "C1AB0FA7CA540BEDE053D065C70ADE01"  # mesmo que comorbidade
-                self.dict['DSC_COMORBIDADES'] = "C1ABF1B29F0CE2A1E053D065C70A072C"
-                self.comorbstring = '"C1ABF1B29F0CE2A1E053D065C70A072C"'
-                self.comorbdict = '{"IdComorbidade":"C1ABF1B29F0CE2A1E053D065C70A072C"}'
+                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
+                self.comorblist.append(di.comorbidade_id["DOENCA RENAL CRONICA"])
             elif ("IMUNOSSUPRESSOR" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "C1AB0FA7CA540BEDE053D065C70ADE01"  # mesmo que comorbidade
-                self.dict['DSC_COMORBIDADES'] = "C1ABF1B29F10E2A1E053D065C70A072C"
-                self.comorbstring = '"C1ABF1B29F10E2A1E053D065C70A072C"'
-                self.comorbdict = '{"IdComorbidade":"C1ABF1B29F10E2A1E053D065C70A072C"}'
+                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
+                self.comorblist.append(di.comorbidade_id["IMUNOSSUPRIMIDO"])
             elif ("MOTORISTAS E COBRADORES" in self.dict['DSC_PUBLICO']) :
                 self.dict['DSC_PUBLICO'] = "C2379A994B453C7BE053D065C70AB01D"
             elif ("GESTANTES, PUÉRPERAS E LACTANTES" in self.dict['DSC_PUBLICO']) :    
@@ -353,8 +295,7 @@ class RegisterBatch() :
             else :
                 print("Grupo de vacinacao nao identificado!", self.dict['DSC_PUBLICO'])          
 
-            self.dict['COMORBSTRING'] = self.comorbstring
-            self.dict['COMORBDICT'] = self.comorbdict
+            self.dict['COMORBLIST'] = self.comorblist
 
             # parse dose
             if ('1' in self.dict['NUM_DOSE_VACINA']) :

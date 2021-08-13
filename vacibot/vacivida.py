@@ -243,9 +243,9 @@ class Vacivida_Sys :
         }
         from dicts import grupo_id
         if (objimunizacao['DSC_PUBLICO'] == grupo_id["COMORBIDADE"]) :
-            imunizar_json["IdComorbidade"]          = [ objimunizacao["COMORBSTRING"] ],
-            imunizar_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"],
-            imunizar_json["VacinacaoComorbidade"]   = [ objimunizacao["COMORBDICT"] ],
+            imunizar_json["IdComorbidade"]          = objimunizacao["COMORBLIST"]
+            imunizar_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"]
+            imunizar_json["VacinacaoComorbidade"]   = [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ]
             imunizar_json["DescricaoBPC"]           = None
 
 
@@ -254,8 +254,7 @@ class Vacivida_Sys :
             "AccessToken":self.login_token
         }
 
-        time.sleep(5)
-        # print("LOG - DATA IMUNIZAR = "+ self.data_imunizar)
+        #print( json.dumps(self.data_imunizar, indent=4))
         response_imunizar = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-Vacinacao',
                                           headers=self.headers, json=self.data_imunizar, timeout=500)
         time.sleep(5)
