@@ -112,10 +112,15 @@ class Filler():
 
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
         elif self.state == 5:
-            if self.working_paciente_json["CodigoSexo"] == None:     #pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
+            if self.working_paciente_json["CodigoSexo"] == None:
+                # se o pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
                 print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
+                db.update("age_agendamento_covid", "ind_vacivida_cadastro", "U", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 self.state = 6
             else:
+                if self.working_entry["IND_VACIVIDA_CADASTRO"] != "T":
+                    # atualiza o IND_VACIVIDA_CADASTRO para True
+                    db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 self.state = 8
                 
         # ESTADO 6 - inicia loop p/. tentar atualizar paciente
