@@ -105,16 +105,10 @@ class Filler():
                 self.remaining_retry = self.remaining_retry - 1
                 
                 # verifica o erro
-                # erro de token inválido: define como não autenticado
-                if ("Token inválido." in cadastrar_status):
-                    self.authenticated = False                
-                # erro de formatação do CNS: descarta o CNS
-                elif ("O CNS do paciente é obrigatório e deve conter 15 dígitos" in cadastrar_status):
-                    self.working_entry['NUM_CNS'] = None
+                self.check_record_error(cadastrar_status)
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
-
 
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
         elif self.state == 5:
@@ -142,13 +136,9 @@ class Filler():
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
-
-                #verifica se o erro foi de token inválido e define como não autenticado
-                if ("Token inválido." in atualizacao_message):
-                    self.authenticated = False    
-                # erro de formatação do CNS: descarta o CNS
-                elif ("O CNS do paciente é obrigatório e deve conter 15 dígitos" in atualizacao_message):
-                    self.working_entry['NUM_CNS'] = None
+                
+                # verifica o erro
+                self.check_record_error(atualizacao_message)
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
@@ -222,7 +212,7 @@ class Filler():
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "Y", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
             print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Outros Erros")
             self.state = 99
-            
+
         # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
         elif self.state == 15:
             # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
@@ -242,6 +232,17 @@ class Filler():
             self.auth_time = time.time()
         else:
             time.sleep(5)
+    
+    def check_record_error(self, error_message):
+        # erro de token inválido: define como não autenticado
+        if ("Token inválido." in error_message):
+            self.authenticated = False                
+        # erro de formatação do CNS: descarta o CNS
+        elif ("O CNS do paciente é obrigatório e deve conter 15 dígitos" in error_message):
+            self.working_entry['NUM_CNS'] = None
+        # erro de CNS duplicado: descarta o CNS
+        elif ("CNS do paciente já cadastrado" in error_message):
+            self.working_entry['NUM_CNS'] = None
 
 class Supervisor():
     def __init__(self, area, cadastros, login, run=False):
