@@ -332,7 +332,8 @@ class Vacivida_Sys :
         else:
             atualizacao_message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
-        return resp_text["Data"], atualizacao_message  #return paciente_json da response
+        #retorna paciente_json da response // paciente_json será null se ocorrer erro na atualização
+        return resp_text["Data"], atualizacao_message
 
     def get_lotes_vacina(self, vacina):
         vac_id = vacina_id[vacina]     

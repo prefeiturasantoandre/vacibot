@@ -125,10 +125,11 @@ class Filler():
 
         # ESTADO 7 - loop de atualização do paciente
         elif self.state == 7:           
-            self.working_paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.working_paciente_json )                
+            paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.working_paciente_json )                
             print(atualizacao_message)
 
             if ("atualizado" in atualizacao_message) :
+                self.working_paciente_json = paciente_json
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 #avança
                 self.state = 8
