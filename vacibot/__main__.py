@@ -529,7 +529,7 @@ while True :
             #registers_to_send = CreateRegistersToSend(list_to_send)
             cadastros_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
 
-            h = Supervisor_remote.options(name=f"{area}.supervisor").remote(alias,cadastros_parsed, login_vacivida[alias])
+            h = Supervisor_remote.options(name=f"{area}.supervisor").remote(area,cadastros_parsed, login_vacivida[alias])
             h.run.remote(n_workers)
             supervisor_handles.append(h)
 
