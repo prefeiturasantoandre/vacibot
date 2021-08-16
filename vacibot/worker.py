@@ -91,14 +91,14 @@ class Filler():
 
         # ESTADO 4 - loop de cadastro do paciente
         elif self.state == 4:            
-            self.vacivida.cadastrar_paciente(self.working_entry)
-            cadastrar_status = self.vacivida.get_cadastro_message()
+            self.working_paciente_json, cadastrar_status = self.vacivida.cadastrar_paciente(self.working_entry)
+            #cadastrar_status = self.vacivida.get_cadastro_message()
             print(cadastrar_status)
 
-            if ("cadastrado" in cadastrar_status) :
+            if ("Incluído com Sucesso" in cadastrar_status) :
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
-                #retorna à consulta p/ buscar id    #TODO: refatorar Vacivida_Sys.cadastrar_paciente() p/ retornar id
-                self.state = 2             
+                #avança p/ próximo estado
+                self.state = 8       
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 print("Tentativas restantes: ", self.remaining_retry)
@@ -114,7 +114,7 @@ class Filler():
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
                 self.state = -1
-            
+
 
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
         elif self.state == 5:

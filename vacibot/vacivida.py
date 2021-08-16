@@ -184,9 +184,10 @@ class Vacivida_Sys :
     # 4. Realiza cadastro do paciente
     def cadastrar_paciente(self, objpaciente) :
         self.objpaciente = objpaciente
+        paciente_json = parse_paciente_json(objpaciente)
  
         self.datacadastro = {
-            "Data":parse_paciente_json(objpaciente),
+            "Data":paciente_json,
             "AccessToken":self.login_token
         }
 
@@ -196,23 +197,17 @@ class Vacivida_Sys :
         # requests.post
         response_incluir = requests.post('https://servico.vacivida.sp.gov.br/Paciente/incluir-paciente',
                                          headers=self.headers, json=self.datacadastro, timeout=500)
-        time.sleep(5)
-        # print("DEBUG - Response incluir= ", response_incluir)
-        self.response_incluir = response_incluir
-        self.dados_incluir = json.loads(response_incluir.text)
-        # print("DEBUG - Dados incluir= ",self.dados_incluir)
-        # print(self.dados_incluir)  #printa resposta recebida da solicitacao de cadastro
+        
+        resp_text = json.loads(response_incluir.text) 
 
-        datastring = json.dumps(self.datacadastro)
+        if (resp_text['ValidationSummary'] != None) :
+            cadastro_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage']) + " CPF : "+ paciente_json['CPF']
+        elif ("Incluído com Sucesso" in resp_text['Message']) :
+            cadastro_message = str(resp_text['Message']) + " CPF: "+paciente_json['CPF'] + " cadastrado"
+        else:
+            cadastro_message = f"Resposta do cadastro: \n{json.dumps(resp_text, indent=4)}"
 
-        if (self.dados_incluir['ValidationSummary'] != None) :
-            # print(self.dados_incluir['ValidationSummary']['Erros'][0]['ErrorMessage'])
-            self.cadastro_message = str(self.dados_incluir['ValidationSummary']['Erros'][0]['ErrorMessage'])+" CPF : "+\
-                                    self.objpaciente['NUM_CPF']
-        elif ("Incluído com Sucesso" in self.dados_incluir['Message']) :
-            # print("Incluido com sucesso")
-            self.cadastro_message = str(self.dados_incluir['Message'])+" CPF: "+self.objpaciente[
-                'NUM_CPF']+" cadastrado "
+        return resp_text["Data"], cadastro_message  #return paciente_json da response
 
     def get_cadastro_message(self) :
         return self.cadastro_message
