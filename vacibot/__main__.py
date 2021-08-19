@@ -24,22 +24,21 @@ import sys
 from credentials import connection_params
 from credentials import login_vacivida
 import dicts as di
-from settings import db, MAX_RETRY
+from settings import db, MAX_RETRY, MAX_WORKERS
 from vacivida import Vacivida_Sys
 
-from worker import Filler, Supervisor
-Filler_remote = ray.remote(Filler)
-Supervisor_remote = ray.remote(Supervisor)
+from worker import Manager
+Manager_remote = ray.remote(Manager)
 
 # DEFINES
-n_workers = 2  # recomendado nao passar de 40 workers por credentials.py
+max_workers = MAX_WORKERS  # recomendado nao passar de 40 workers por credentials.py
 standalonemode = True
 headnodeip = '127.0.0.1:6379'
 headnodepassword = '5241590000000000'
 
 #argument for n_workers
 try:
-    n_workers = int(sys.argv[1])
+    max_workers = int(sys.argv[1])
 except:
     pass
 
@@ -80,7 +79,7 @@ def GetDB(filter_area=None) :
         pass
     con.close()
 
-    lista_dividida = np.array_split(list_seq_agenda, n_workers)  # divide a lista de seqs pela quantidade de workers
+    lista_dividida = np.array_split(list_seq_agenda, 1)  # divide a lista de seqs pela quantidade de workers
 
     # Coloca o resultado do split em list_to_send de acordo com a qntde de workers
     for array in lista_dividida :
@@ -88,9 +87,9 @@ def GetDB(filter_area=None) :
         list_to_send.append(array.tolist())
 
     # tamanho da lista sera utilizado para definir o tamanho do loop dos workers
-    size_of_list = len(list_seq_agenda) / n_workers
+    size_of_list = len(list_seq_agenda) / 1
 
-    print(f"########## [{area}] Tamanho da lista: ", len(list_seq_agenda))
+    print(f"########## [{filter_area}] Tamanho da lista: ", len(list_seq_agenda))
 
     return list_to_send, list_seq_agenda
 
@@ -509,7 +508,6 @@ def update_lotes_db(local_lotes):
 # Loop para reiniciar os registros a cada time.sleep(x) tempo
 # Dica: em momentos de instabilidade, pode ser interessante reduzir o tempo para apenas alguns minutos
 while True :
-    supervisor_handles = []
     while True:
         print("Atualizando listas de lotes")
         try:
@@ -518,23 +516,34 @@ while True :
             break
         except Exception as e:
             print("Não foi possível atualizar lista de lotes.")
-        time.sleep(60)
+        time.sleep(30)
 
-    for area in di.area_alias:        
-        print(f"[{area}] Inicializando processos...")
-        list_to_send, list_seq_agenda = GetDB(area)
-        alias = di.area_alias[area]     #diferentes areas (DSC_AREA) representam o mesmo local (alias)
+    print ("Inicializando processos...")
+    list_to_send, list_seq_agenda = GetDB()
+    records_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
+    manager = Manager_remote.options(name='manager').remote(max_workers)
 
-        if len(list_seq_agenda) != 0 and di.vacinador[alias] != "" and di.estabelecimento[alias] != "":
-            #registers_to_send = CreateRegistersToSend(list_to_send)
-            cadastros_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
+    # separa os registros por area
+    area_records = {}
+    for record in records_parsed:
+        try:
+            area_records[ di.area_alias[record["DSC_AREA"]] ].append(record)
+        except:
+            area_records[ di.area_alias[record["DSC_AREA"]] ] = [ record ]    
 
-            h = Supervisor_remote.options(name=f"{area}.supervisor").remote(area,cadastros_parsed, login_vacivida[alias])
-            h.run.remote(n_workers)
-            supervisor_handles.append(h)
-
-            time.sleep(15)  # aguarda X segundos para despachar supervisor de nova area
+    # inicializa os supervisores
+    created = []
+    print("Quantidade por Local:")
+    for area in area_records:
+        if di.vacinador[area] != "" and di.estabelecimento[area] != "":
+            created.append( manager.create_supervisor.remote(area, area_records[area], login_vacivida[area]) )
+            print (f"{len(area_records[area]):^5} - {area}")
+    
+    # aguarda a confirmação de criação dos supervisores e executa
+    ray.get(created)
+    manager.run.remote()
+    #manager.run()
 
     #termina os actors e reinicia o processamento
     time.sleep(3600)  # reinicia processos a cada X segundos
-    [ray.kill(h) for h in supervisor_handles]
+    ray.kill(manager)

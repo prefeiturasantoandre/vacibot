@@ -1,6 +1,6 @@
 import time, logging, ray, asyncio
 from vacivida import Vacivida_Sys
-from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT
+from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT, MAX_WORKERS
 
 logging.basicConfig(filename="logs/worker.log", level=logging.ERROR)
 
@@ -33,6 +33,7 @@ class Filler():
                 # se o supervisor não devolver novos cadastros, sai do loop
                 if not self.cadastros_worker:
                     self._print("Lista de cadastros finalizada")
+                    supervisor.notify.remote(self.id)
                     break
             self.working_entry = self.cadastros_worker.pop(0)
             self.state = 1
@@ -257,28 +258,47 @@ class Filler():
         print(f"[{self.area[0:14]:^15}|{('filler-'+str(self.id)):^10}]", *args)
 
 class Supervisor():
-    def __init__(self, area, cadastros, login, run=False):
+    def __init__(self, area, cadastros, login, run=False, n_workers=0):
         self.area = area
         self.queue = cadastros
         self.login = login
         self.fillers = []
+        self.last_filler = -1
+        self.n_workers = n_workers
 
         self._print(f"Inicializando supervisor com {len(self.queue)} cadastros")
 
-    async def run(self, n_workers):
+    async def run(self, n_workers=None):
+        if n_workers:
+            self.n_workers = n_workers
         Filler_remote = ray.remote(Filler)
 
-        while (True):
-            if len(self.fillers) < n_workers:
-                # inicializa os actors Filler
-                #Filler(0,registers_to_send, login_vacivida[alias], run=True)        #debug
-                handles = [Filler_remote.remote(j, self.area, self.pop_entries(), self.login, run=False) for j in range(n_workers-len(self.fillers))]
-                [h.run.remote() for h in handles]
+        while (self.queue):
+            # enquanto houver cadastros na fila
+            # dispacha um Filler por vez e espera DISPATCHER_WAIT segundos
+            if len(self.fillers) < self.n_workers:
+                # inicializa novo actor Filler
+                self.last_filler += 1
+                f_id   = self.last_filler
+                f_name = f'{self.area}.filler-{f_id}'
+                filler = Filler_remote.options(name=f_name).remote(f_id, self.area, self.pop_entries(), self.login, run=False)
 
-                # agrega os novos Actor_handles de Filler_remote à lista para manter a referência e manter os Actors vivos
-                self.fillers += handles
+                filler.run.remote()
+
+                # agrega o novo Actor_handle de Filler_remote à lista para manter a referência e manter o Actor vivo
+                self.fillers.append(filler)
 
             await asyncio.sleep(DISPATCHER_WAIT)
+
+        # fila finalizada
+        # aguarda fillers notificarem término
+        while (self.fillers):
+            await asyncio.sleep(5)
+        
+        self._print("Finalizada execução")
+        # notifica Manager
+        manager = ray.get_actor("manager")
+        manager.notify.remote(self.area)
 
     def pop_entries(self, n=WORKING_QUEUE):
         entries = []
@@ -287,3 +307,101 @@ class Supervisor():
 
     def _print(self, str):
         print(f"[{self.area[0:14]:^15}|supervisor] {str}")
+
+    def set_n_workers(self, n):
+        self.n_workers = n
+    def get_n_workers(self):
+        return self.n_workers
+    def add_n_workers(self, n):
+        self.n_workers += n
+
+    def notify(self, filler_id, cadastros=[]):
+        # retorna os cadastros remanescentes à fila
+        if cadastros:
+            self.cadastros.append(cadastros)        
+        # encontra o handler do filler
+        filler = ray.get_actor(f"{self.area}.filler-{filler_id}")        
+        # termina o filler
+        ray.kill(filler)
+        # encontra o handler local do filler e remove da lista
+        for h in self.fillers:
+            if h._ray_actor_id == filler._ray_actor_id:
+                self.fillers.remove(h)
+                break
+
+class Manager:
+    def __init__(self, max_workers=MAX_WORKERS):
+        self.max_workers = max_workers
+        self.used_workers = 0
+        self.supervisors = {}
+
+    def create_supervisor(self, area, records, login):
+        h = ray.remote(Supervisor).options(name=f"{area}.supervisor").remote(area, records, login)
+        self.supervisors[area] = {
+            "handler":h,
+            "n_workers":0,
+            "list_size":len(records)
+        }
+        return True
+
+    async def run(self):
+        # inicializa cada supervisor
+        for area in self.supervisors:
+            s = self.supervisors[area]
+            while True:
+                if self.used_workers <= self.max_workers:
+                    self.used_workers += 1
+                    s["n_workers"] = 1
+                    s["handler"].run.remote(1)
+                    break
+                else:
+                    await asyncio.sleep(DISPATCHER_WAIT)
+                    #time.sleep(DISPATCHER_WAIT)        
+        self._print("Todos os supervisores foram iniciados com 1 worker")
+
+        # enquanto houverem supervisores ativos, verifica se
+        # existem workers disponíveis e os distribui p/ cada supervisor
+        while self.supervisors != None:
+            if self.used_workers <= self.max_workers:
+                # encontra o supervisor com menor n_workers
+                min = self.max_workers
+                for area in self.supervisors:
+                    if self.supervisors[area]["n_workers"] < min:
+                        min = self.supervisors[area]["n_workers"] 
+                        s = self.supervisors[area]
+                        a = area
+                del min
+
+                # acrescenta 1 n_worker
+                self.used_workers += 1
+                s["n_workers"] += 1
+                s["handler"].add_n_workers.remote(1)
+                self._print(f"novo worker atribuido ao {a}")
+
+            else:
+                await asyncio.sleep(DISPATCHER_WAIT)
+                #time.sleep(DISPATCHER_WAIT)
+
+        print("Execução finalizada")
+        return True
+
+    def notify(self, area):
+        # encontra o handler do supervisor
+        supervisor = ray.get_actor(f"{area}.supervisor")   
+
+        # termina o supervisor
+        ray.kill(supervisor)
+        # encontra o handler local
+        for area in self.supervisors:
+            if self.supervisors[area]["handler"]._ray_actor_id == supervisor._ray_actor_id:
+                # retorna workers para serem reutilizados
+                n = self.supervisors[area]["n_workers"]           
+                self.used_workers -= n
+                self._print(f"Supervisor de {area} devolveu {n} workers")
+                self.supervisors.pop(area)
+                break
+
+    def _print(self, str):
+        print(f"[{'manager':^26}] {str}")
+
+
