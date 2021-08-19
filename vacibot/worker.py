@@ -15,7 +15,7 @@ class Filler():
         self.state = 0      #0 = não executando
         self.auth_time = 0
 
-        print("Inicializando worker ", id)
+        self._print(f"Inicializando worker")
 
         if run:
             self.run()
@@ -25,14 +25,14 @@ class Filler():
         while True:        # roda enquanto houver cadastros não inseridos no vacivida
             if not self.cadastros_worker:
                 # se a lista de cadastros está vazia, solicita mais cadastros ao Supervisor
-                print("Requisitando novos cadastros ao supervisor")
+                self._print(f"Requisitando novos cadastros ao supervisor")
                 supervisor = ray.get_actor(f"{self.area}.supervisor")
                 new_entries = ray.get( supervisor.pop_entries.remote() )
                 self.cadastros_worker.extend(new_entries)
 
                 # se o supervisor não devolver novos cadastros, sai do loop
                 if not self.cadastros_worker:
-                    print("Lista de cadastros finalizada")
+                    self._print("Lista de cadastros finalizada")
                     break
             self.working_entry = self.cadastros_worker.pop(0)
             self.state = 1
@@ -41,10 +41,10 @@ class Filler():
             while self.state not in (99,-1):         #99 = finalizado | -1 = erro
                 try:
                     self.step()
-                    #print(self.id,self.vacivida.login_token[-44:])     #debug
+                    #self._print(self.id,self.vacivida.login_token[-44:])     #debug
                 except Exception as e:
                     self.state = -1
-                    print ("CRITICAL - Um Exception lançado no processamento do cadastro.")
+                    self._print ("CRITICAL - Um Exception lançado no processamento do cadastro.")
                     logging.exception(f"CRITICAL - Um Exception lançado no processamento do cadastro: {self.working_entry}")
         return True
             
@@ -60,7 +60,7 @@ class Filler():
         elif self.state == 1:
             if time.time()-self.auth_time > 1800:
                 self.authenticated = False
-                print("Passaram 30min, fazendo nova autenticacao para o Worker ", self.id)
+                self._print("Passaram 30min, fazendo nova autenticacao para o Worker ", self.id)
             else:
                 #avança para o próximo estado
                 self.state = 2
@@ -69,7 +69,7 @@ class Filler():
         elif self.state == 2:
             self.working_paciente_json = self.vacivida.consultacpf(self.working_entry['NUM_CPF'])
             cadastro_status = self.vacivida.get_consult_message()
-            print(cadastro_status)
+            self._print(cadastro_status)
 
             if ("Usuário NÃO Cadastrado" in cadastro_status) :
                 self.state = 3
@@ -93,7 +93,7 @@ class Filler():
         elif self.state == 4:            
             self.working_paciente_json, cadastrar_status = self.vacivida.cadastrar_paciente(self.working_entry)
             #cadastrar_status = self.vacivida.get_cadastro_message()
-            print(cadastrar_status)
+            self._print(cadastrar_status)
 
             if ("Incluído com Sucesso" in cadastrar_status) :
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
@@ -101,7 +101,7 @@ class Filler():
                 self.state = 8       
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                print("Tentativas restantes: ", self.remaining_retry)
+                self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 # verifica o erro
@@ -117,7 +117,7 @@ class Filler():
                 self.state = 6
             elif self.working_paciente_json["CodigoSexo"] == None:
                 # se o pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
-                print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
+                self._print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "U", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 self.state = 6
             else:
@@ -134,7 +134,7 @@ class Filler():
         # ESTADO 7 - loop de atualização do paciente
         elif self.state == 7:           
             paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.working_paciente_json )                
-            print(atualizacao_message)
+            self._print(atualizacao_message)
 
             if ("atualizado" in atualizacao_message) :
                 self.working_paciente_json = paciente_json
@@ -143,7 +143,7 @@ class Filler():
                 self.state = 8
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                print("Tentativas restantes: ", self.remaining_retry)
+                self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 # verifica o erro
@@ -163,7 +163,7 @@ class Filler():
         elif self.state == 9:
             self.vacivida.imunizar(self.working_entry)
             imunizar_status = self.vacivida.get_imunizar_message()
-            print(imunizar_status)
+            self._print(imunizar_status)
 
             if ("Incluído com Sucesso" in imunizar_status) :
                 self.state = 10
@@ -182,7 +182,7 @@ class Filler():
 
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                print("Tentativas restantes: ", self.remaining_retry)
+                self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 #verifica se o erro foi de token inválido e define como não autenticado
@@ -195,47 +195,47 @@ class Filler():
         # ESTADO 10 - imunização registrada com sucesso
         elif self.state == 10:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para True")
+            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para True")
             self.state = 99
 
         # ESTADO 11 - erro no registro de imunização - 2a dose diferente da 1a
         elif self.state == 11:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "E", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Erro")
+            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Erro")
             self.state = 99
 
         # ESTADO 12 - erro no registro de imunização - 2a dose sem a 1a cadastrada no VaciVida
         elif self.state == 12:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "I", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Inconsistente")
+            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Inconsistente")
             self.state = 99
 
         # ESTADO 13 - erro no registro de imunização - data de nascimento incorreta
         elif self.state == 13:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "X", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Data de Nascimento Incorreto")
+            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Data de Nascimento Incorreto")
             self.state = 99
 
         # ESTADO 14 - erro no registro de imunização - outros
         elif self.state == 14:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "Y", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Outros Erros")
+            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Outros Erros")
             self.state = 99
 
         # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
         elif self.state == 15:
             # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "NUM_CPF",self.working_entry["NUM_CPF"])                   
-            print("Vacinacoes de NUM_CPF = ", self.working_entry['NUM_CPF'], " atualizado para Falso")
+            self._print("Vacinacoes de NUM_CPF = ", self.working_entry['NUM_CPF'], " atualizado para Falso")
             self.state = 99
             
         else:
-            print("FATAL - Erro no worker")
+            self._print("FATAL - Erro no worker")
             self.state = -1
 
     def autenticar(self):
         auth_message = self.vacivida.autenticar(self.login)        
-        print("Worker ", self.id, auth_message)
+        self._print(auth_message)
         self.authenticated = (auth_message == "Autenticado!")
         if self.authenticated:
             self.auth_time = time.time()
@@ -253,6 +253,9 @@ class Filler():
         elif ("CNS do paciente já cadastrado" in error_message):
             self.working_entry['NUM_CNS'] = None
 
+    def _print(self, *args):
+        print(f"[{self.area[0:14]:^15}|{('filler-'+str(self.id)):^10}]", *args)
+
 class Supervisor():
     def __init__(self, area, cadastros, login, run=False):
         self.area = area
@@ -260,7 +263,7 @@ class Supervisor():
         self.login = login
         self.fillers = []
 
-        print("Inicializando supervisor de ", self.area)
+        self._print(f"Inicializando supervisor com {len(self.queue)} cadastros")
 
     async def run(self, n_workers):
         Filler_remote = ray.remote(Filler)
@@ -282,3 +285,5 @@ class Supervisor():
         [ entries.append(self.queue.pop(0)) for _ in range( min(n, len(self.queue)) )  ]
         return entries
 
+    def _print(self, str):
+        print(f"[{self.area[0:14]:^15}|supervisor] {str}")
