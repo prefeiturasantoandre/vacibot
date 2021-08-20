@@ -178,13 +178,21 @@ class Filler():
                 self.error_message = atualizacao_message
                 self.state = -1
 
-        # ESTADO 8 - inicia loop p/. tentar cadastrar imunização
+        # ESTADO 8 - verifica o cadastro de imunização
         elif self.state == 8:
+            # verifica se o paciente ainda não foi vacinado (por ex, quando somente é passado a flag de update de cadastro)
+            if self.working_entry['IND_VACIVIDA_VACINACAO'] != "T":
+                self.state = 8.1
+            else:
+                self.state = 99
+
+        # ESTADO 8.1 - inicia loop p/. tentar cadastrar imunização
+        elif self.state == 8.1:
             self.working_entry['ID_PACIENTE'] = self.working_paciente_json["IdPaciente"]
 
             self.remaining_retry = MAX_RETRY -1
             self.state = 9
-            
+
         # ESTADO 9 - loop de cadastro de imunização
         elif self.state == 9:
             self.vacivida.imunizar(self.working_entry)
