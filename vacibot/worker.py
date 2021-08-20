@@ -266,7 +266,7 @@ class Filler():
             # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "NUM_CPF",self.working_entry["NUM_CPF"])                   
             self.error_message = f"Vacinacoes de NUM_CPF = {self.working_entry['NUM_CPF']} atualizadas para Falso"
-            self.state = 98
+            self.state = -2
             
         else:
             self.error_message = "CRITICAL - Estado inválido: "+str(self.state)
