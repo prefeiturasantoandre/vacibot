@@ -269,7 +269,8 @@ class Filler():
             self.state = 98
             
         else:
-            self._print("FATAL - Erro no worker")
+            self.error_message = "CRITICAL - Estado inválido: "+str(self.state)
+            self.error_state = self.state
             self.state = -1
 
     def autenticar(self):
