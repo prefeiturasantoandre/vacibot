@@ -35,17 +35,33 @@ class Filler():
                     self._print("Lista de cadastros finalizada")
                     supervisor.notify.remote(self.id)
                     break
+
+            # inicia o processo de cadastro
             self.working_entry = self.cadastros_worker.pop(0)
             self.state = 1
             self.working_paciente_json = None
             self.remaining_retry = 0
-            while self.state not in (99,-1):         #99 = finalizado | -1 = erro
+            self.error_message = ""
+            self.error_state = 0
+            while True:
+                # condições de parada
+                if  self.state == 99:
+                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Sucesso")
+                    break
+                elif self.state == -1:
+                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro: {self.error_message}")
+                    break
+                elif self.state == -2:
+                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro Tratado: {self.error_message}")
+                    break
+
+                # execução
                 try:
                     self.step()
                     #self._print(self.id,self.vacivida.login_token[-44:])     #debug
                 except Exception as e:
                     self.state = -1
-                    self._print ("CRITICAL - Um Exception lançado no processamento do cadastro.")
+                    self.error_message = "CRITICAL - Um Exception lançado no processamento do cadastro."
                     logging.exception(f"CRITICAL - Um Exception lançado no processamento do cadastro: {self.working_entry}")
         return True
             
@@ -61,7 +77,7 @@ class Filler():
         elif self.state == 1:
             if time.time()-self.auth_time > 1800:
                 self.authenticated = False
-                self._print("Passaram 30min, fazendo nova autenticacao para o Worker ", self.id)
+                self._print("Passaram 30min, fazendo nova autenticacao para o Worker")
             else:
                 #avança para o próximo estado
                 self.state = 2
@@ -70,7 +86,7 @@ class Filler():
         elif self.state == 2:
             self.working_paciente_json = self.vacivida.consultacpf(self.working_entry['NUM_CPF'])
             cadastro_status = self.vacivida.get_consult_message()
-            self._print(cadastro_status)
+            #self._print(cadastro_status)
 
             if ("Usuário NÃO Cadastrado" in cadastro_status) :
                 self.state = 3
@@ -80,7 +96,10 @@ class Filler():
                 # define como não autenticado e não altera o estado
                 self.authenticated = False
             else:
-                self.state = -1    
+                # atribui parametros do erro e avança para o estado de erro
+                self.error_state = self.state
+                self.error_message = cadastro_status
+                self.state = -1
 
         # ESTADO 3 - inicia loop p/. tentar cadastrar paciente
         elif self.state == 3:
@@ -94,7 +113,7 @@ class Filler():
         elif self.state == 4:            
             self.working_paciente_json, cadastrar_status = self.vacivida.cadastrar_paciente(self.working_entry)
             #cadastrar_status = self.vacivida.get_cadastro_message()
-            self._print(cadastrar_status)
+            #self._print(cadastrar_status)
 
             if ("Incluído com Sucesso" in cadastrar_status) :
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
@@ -102,13 +121,16 @@ class Filler():
                 self.state = 8       
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                self._print("Tentativas restantes: ", self.remaining_retry)
+                #self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 # verifica o erro
                 self.check_record_error(cadastrar_status)
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
+                # atribui parametros do erro e avança para o estado de erro
+                self.error_state = self.state
+                self.error_message = cadastrar_status
                 self.state = -1
 
         # ESTADO 5 - verifica necessidade de atualizar o cadastro do paciente
@@ -118,7 +140,7 @@ class Filler():
                 self.state = 6
             elif self.working_paciente_json["CodigoSexo"] == None:
                 # se o pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
-                self._print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
+                #self._print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "U", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                 self.state = 6
             else:
@@ -135,7 +157,7 @@ class Filler():
         # ESTADO 7 - loop de atualização do paciente
         elif self.state == 7:           
             paciente_json, atualizacao_message = self.vacivida.atualizar_paciente(self.working_entry, self.working_paciente_json )                
-            self._print(atualizacao_message)
+            #self._print(atualizacao_message)
 
             if ("atualizado" in atualizacao_message) :
                 self.working_paciente_json = paciente_json
@@ -144,13 +166,16 @@ class Filler():
                 self.state = 8
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                self._print("Tentativas restantes: ", self.remaining_retry)
+                #self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 # verifica o erro
                 self.check_record_error(atualizacao_message)
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
+                # atribui parametros do erro e avança para o estado de erro
+                self.error_state = self.state
+                self.error_message = atualizacao_message
                 self.state = -1
 
         # ESTADO 8 - inicia loop p/. tentar cadastrar imunização
@@ -164,7 +189,7 @@ class Filler():
         elif self.state == 9:
             self.vacivida.imunizar(self.working_entry)
             imunizar_status = self.vacivida.get_imunizar_message()
-            self._print(imunizar_status)
+            #self._print(imunizar_status)
 
             if ("Incluído com Sucesso" in imunizar_status) :
                 self.state = 10
@@ -185,7 +210,7 @@ class Filler():
 
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
-                self._print("Tentativas restantes: ", self.remaining_retry)
+                #self._print("Tentativas restantes: ", self.remaining_retry)
                 self.remaining_retry = self.remaining_retry - 1
                 
                 #verifica se o erro foi de token inválido e define como não autenticado
@@ -193,44 +218,47 @@ class Filler():
                     self.authenticated = False
             else:
                 #finaliza com erro quando atinge MAX_RETRY tentativas
+                # atribui parametros do erro e avança para o estado de erro
+                self.error_state = self.state
+                self.error_message = imunizar_status
                 self.state = -1
                 
         # ESTADO 10 - imunização registrada com sucesso
         elif self.state == 10:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para True")
+            #self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para True")
             self.state = 99
 
         # ESTADO 11 - erro no registro de imunização - 2a dose diferente da 1a
         elif self.state == 11:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "E", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Erro")
-            self.state = 99
+            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Erro"
+            self.state = -2
 
         # ESTADO 12 - erro no registro de imunização - 2a dose sem a 1a cadastrada no VaciVida
         elif self.state == 12:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "I", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Inconsistente")
-            self.state = 99
+            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Inconsistente"
+            self.state = -2
 
         # ESTADO 13 - erro no registro de imunização - data de nascimento incorreta
         elif self.state == 13:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "X", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Data de Nascimento Incorreto")
-            self.state = 99
+            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Data de Nascimento Incorreto"
+            self.state = -2
 
         # ESTADO 14 - erro no registro de imunização - outros
         elif self.state == 14:
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "Y", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para Outros Erros")
-            self.state = 99
+            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Outros Erros"
+            self.state = -2
 
         # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
         elif self.state == 15:
             # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
             db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "NUM_CPF",self.working_entry["NUM_CPF"])                   
-            self._print("Vacinacoes de NUM_CPF = ", self.working_entry['NUM_CPF'], " atualizado para Falso")
-            self.state = 99
+            self.error_message = f"Vacinacoes de NUM_CPF = {self.working_entry['NUM_CPF']} atualizadas para Falso"
+            self.state = 98
             
         else:
             self._print("FATAL - Erro no worker")
