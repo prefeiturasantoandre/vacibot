@@ -170,6 +170,8 @@ class Filler():
                 self.state = 10
             elif ("já tomou esta dose" in imunizar_status) :
                 self.state = 10
+            elif "Já existe uma primeira dose para o esquema vacinal atual" in imunizar_status :
+                self.state = 10
             elif ("Não é permitido que a 2ª dose da vacina seja diferente da 1ª dose CPF" in imunizar_status) :
                 self.state = 11
             elif ("A primeira dose do paciente não está registrado no VaciVida." in imunizar_status) :
