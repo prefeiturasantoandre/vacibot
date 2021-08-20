@@ -56,7 +56,7 @@ class Vacivida_Sys :
             'sec-ch-ua-mobile' : '?0',
             'User-Agent' : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36',
             'sec-ch-ua' : '"Chromium";v="88", "Google Chrome";v="88", ";Not A Brand";v="99"',
-            'Content-Type' : 'application/json',
+            'Content-Type' : 'application/json;charset=utf-8',
             'Origin' : 'https://vacivida.sp.gov.br',
             'Sec-Fetch-Site' : 'same-site',
             'Sec-Fetch-Mode' : 'cors',
@@ -64,9 +64,13 @@ class Vacivida_Sys :
             'Referer' : 'https://vacivida.sp.gov.br/',
             'Accept-Language' : 'pt,en-US;q=0.9,en;q=0.8',
         }
-        data = login
+
+        data = {"Data":{
+            "Login":login[0],
+            "Senha":login[1]
+        }}
         response_login = requests.post('https://servico.vacivida.sp.gov.br/Usuario/Logar', headers=self.headers,
-                                       data=data)
+                                       json=data)
 
         # transforma resposta em chaves
         resp_text = json.loads(response_login.text)
@@ -96,7 +100,7 @@ class Vacivida_Sys :
             self.auth_message = "Autenticado!"
 
         else:
-            self.auth_message = "Nao autenticado"
+            self.auth_message = "Nao autenticado: " + str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         
         return self.get_auth_message()
         
