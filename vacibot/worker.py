@@ -384,6 +384,11 @@ class Manager:
         return True
 
     async def run(self):
+        # verifica se os supervisores foram inicializados
+        if not self.supervisors:
+            self._print("Nenhum supervisor foi inicializado. É necessário inicializar os supervisores antes de executar.")
+            return False
+
         # inicializa cada supervisor
         for area in self.supervisors:
             s = self.supervisors[area]
@@ -400,7 +405,7 @@ class Manager:
 
         # enquanto houverem supervisores ativos, verifica se
         # existem workers disponíveis e os distribui p/ cada supervisor
-        while self.supervisors != None:
+        while self.supervisors:
             if self.used_workers <= self.max_workers:
                 # encontra o supervisor com menor n_workers
                 min = self.max_workers
@@ -421,7 +426,7 @@ class Manager:
                 await asyncio.sleep(DISPATCHER_WAIT)
                 #time.sleep(DISPATCHER_WAIT)
 
-        print("Execução finalizada")
+        self._print("Execução finalizada")
         return True
 
     def notify(self, area):
