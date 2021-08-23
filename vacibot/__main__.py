@@ -103,6 +103,7 @@ class RegisterBatch() :
     def parse_to_dict(self, ) :
         self.list_agenda_parsed = []
         for list_agenda_line in self.list_agenda :
+            parser_error = None
             self.dict = {self.list_index[0] : str(list_agenda_line[0]),  # SEQ_AGENDA
                          self.list_index[1] : str(list_agenda_line[1]),  # new: DSC_PUBLICO // old: 'DSC_AREA'
                          self.list_index[2] : str(list_agenda_line[2]),  # 'DSC_NOME'
@@ -292,7 +293,7 @@ class RegisterBatch() :
             elif ("PÚBLICO GERAL" in self.dict['DSC_PUBLICO']):
                 self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
             else :
-                print("Grupo de vacinacao nao identificado!", self.dict['DSC_PUBLICO'])          
+                parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DSC_PUBLICO']}"          
 
             self.dict['COMORBLIST'] = self.comorblist
 
@@ -315,7 +316,7 @@ class RegisterBatch() :
                     found = True
 
                     if self.dict['NUM_LOTE_VACINA'] == None:
-                        print( f"Lote não identificado para {key}: {lote}" )
+                        parser_error = f"Lote não identificado para {key}: {lote}"
                         
                         #salva lotes c/ erro p/ consulta
                         with open("logs/lotes_erro.csv", "a") as fp:
@@ -323,7 +324,7 @@ class RegisterBatch() :
                     
                     break
             if not found:    
-                print("Vacina não identificada: ", self.dict['DSC_TIPO_VACINA'])
+                parser_error = "Vacina não identificada: ", self.dict['DSC_TIPO_VACINA']
             del found
 
 
@@ -367,8 +368,11 @@ class RegisterBatch() :
                 "%Y-%m-%dT%H:%M:%S.000Z")
             self.dict['DTA_COMPARECIMENTO_PESSOA'] = str(self.dict['DTA_COMPARECIMENTO_PESSOA'])
 
-            # salva agenda parseada
-            self.list_agenda_parsed.append(self.dict)
+            # salva agenda parseada se o parser não apresentou erro
+            if parser_error:
+                print(f"{parser_error} | Cadastro SEQ_AGENDA={self.dict['SEQ_AGENDA']} desconsiderado")
+            else:
+                self.list_agenda_parsed.append(self.dict)
 
     def get_list_agenda_parsed_full(self) :
         return self.list_agenda_parsed
