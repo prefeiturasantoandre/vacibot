@@ -310,10 +310,13 @@ class Vacivida_Sys :
             #paciente_json["IdPaciente"] = id_paciente          #utilizar o id do json passado como parâmetro
             paciente_json["NumeroTelefone"] = objpaciente['NUM_TELEFONE_DDD'] + objpaciente['NUM_TELEFONE_NUM']
             if paciente_json["Telefones"]:
-                paciente_json["Telefones"][0] = self.atualizar_telefone_paciente( paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM'], paciente_json["Telefones"][0]["IdPacienteTelefone"] )
+                paciente_json["Telefones"][0], msg_telefone = self.atualizar_telefone_paciente( paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM'], paciente_json["Telefones"][0]["IdPacienteTelefone"] )
             else:
-                paciente_json["Telefones"] = [ self.atualizar_telefone_paciente(paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM']) ]
-
+                paciente_json["Telefones"] = msg_telefone = [ self.atualizar_telefone_paciente(paciente_json["IdPaciente"], objpaciente['NUM_TELEFONE_DDD'], objpaciente['NUM_TELEFONE_NUM']) ]
+            
+            # verifica se houv erro ao atualizar telefone
+            if "Telefone Atualizado com Sucesso" not in msg_telefone:
+                return None, msg_telefone
         data = {
             "Data":paciente_json,
             "AccessToken":self.login_token
@@ -364,12 +367,9 @@ class Vacivida_Sys :
                                          headers=self.headers, json=data, timeout=500)
         resp_text = json.loads(resp.text) 
 
-        #TODO
         if (resp_text['ValidationSummary'] != None) :
-            # print(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
             atualizacao_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Telefone Atualizado com Sucesso" in resp_text['Message']) :
-            # print("Atualizado com sucesso")
             atualizacao_message = str(resp_text['Message'])
         else:
             atualizacao_message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
