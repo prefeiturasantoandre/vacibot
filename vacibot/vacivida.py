@@ -375,3 +375,9 @@ class Vacivida_Sys :
             atualizacao_message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
         return resp_text["Data"], atualizacao_message  #return telefone_json da response
+
+    def get_historico_vacinacao(self, paciente_id):
+        resp = requests.get('https://servico.vacivida.sp.gov.br/Vacinacao/Historico-Vacinacao-Paciente-Tela/' + paciente_id, 
+                            headers=self.headers, timeout=500)
+        resp_text = json.loads(resp.text) 
+        return resp_text["Data"]["vacinacao"]

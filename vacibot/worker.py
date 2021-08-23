@@ -1,6 +1,7 @@
 import time, logging, ray, asyncio
 from vacivida import Vacivida_Sys
 from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT, MAX_WORKERS
+import dicts as di
 
 logging.basicConfig(filename="logs/worker.log", level=logging.ERROR)
 
@@ -180,11 +181,38 @@ class Filler():
 
         # ESTADO 8 - verifica o cadastro de imunização
         elif self.state == 8:
-            # verifica se o paciente ainda não foi vacinado (por ex, quando somente é passado a flag de update de cadastro)
-            if self.working_entry['IND_VACIVIDA_VACINACAO'] != "T":
-                self.state = 8.1
-            else:
+            historico = self.vacivida.get_historico_vacinacao( self.working_paciente_json["IdPaciente"] )
+
+            # verifica se o paciente ainda não foi vacinado no Vacivida
+            on_vacivida = False
+            for vacinacao in historico:
+                if vacinacao["IdDose"] == self.working_entry["NUM_DOSE_VACINA"]:
+                    # vacinação já inserida no vacivida
+                    on_vacivida = True
+                    break
+            
+            if on_vacivida:
+                if self.working_entry['IND_VACIVIDA_VACINACAO'] != "T":
+                    # está inserido no vacivida e o bd aponta como não inserido (ou com alguma tag de erro)
+                    # atualiza bd
+                    db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                
+                #finaliza
                 self.state = 99
+            else:
+                if self.working_entry['IND_VACIVIDA_VACINACAO'] == "T":
+                    # não está inserido no vacivida e o bd aponta como inserido
+                    # atualiza bd
+                    db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+
+                if self.working_entry["DSC_PUBLICO"] == di.grupo_id["COMORBIDADE"] and self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['2']:
+                    # 2a dose do público de comorbidades precisa utilizar o mesmo CRM
+                    for vacinacao in historico:
+                        if vacinacao["IdDose"] == di.dose_id["1"]:
+                            self.working_entry["NUM_CRM"] = vacinacao["CRMComorbidade"]
+                 
+                # avança para o próximo estado
+                self.state = 8.1
 
         # ESTADO 8.1 - inicia loop p/. tentar cadastrar imunização
         elif self.state == 8.1:
