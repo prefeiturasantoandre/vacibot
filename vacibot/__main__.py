@@ -298,10 +298,7 @@ class RegisterBatch() :
             self.dict['COMORBLIST'] = self.comorblist
 
             # parse dose
-            if ('1' in self.dict['NUM_DOSE_VACINA']) :
-                self.dict['NUM_DOSE_VACINA'] = "B66C4B622F1F840AE053D065C70A17A1"
-            elif ('2' in self.dict['NUM_DOSE_VACINA']) :
-                self.dict['NUM_DOSE_VACINA'] = "B66C4B622F21840AE053D065C70A17A1"
+            self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
             if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
                 self.dict['NUM_DOSE_VACINA'] = "B8A51B8A4CF6F4E9E053D065C70A556D"       #dose única
 
