@@ -292,8 +292,8 @@ class Filler():
         # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
         elif self.state == 15:
             # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "NUM_CPF",self.working_entry["NUM_CPF"])                   
-            self.error_message = f"Vacinacoes de NUM_CPF = {self.working_entry['NUM_CPF']} atualizadas para Falso"
+            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "I", "NUM_CPF",self.working_entry["NUM_CPF"])             
+            self.error_message = f"Vacinacoes de NUM_CPF = {self.working_entry['NUM_CPF']} atualizadas para Inconsistente"
             self.state = -2
             
         else:
