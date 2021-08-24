@@ -385,8 +385,11 @@ class Vacivida_Sys :
         return resp_text["Data"]["vacinacao"]
     
     def delete_vacinacao(self, vacinacao_id):
-        resp = requests.put('https://servico.vacivida.sp.gov.br/Vacinacao/deletar-vacinacao/' + vacinacao_id, 
+        try:
+            resp = requests.put('https://servico.vacivida.sp.gov.br/Vacinacao/deletar-vacinacao/' + vacinacao_id, 
                             headers=self.headers, timeout=500)
+        except Exception as e:
+            return False, e
 
         if resp.status_code != requests.codes.ok:
             return False, f"{resp.status_code} - Erro durante o Request de exclusão"
