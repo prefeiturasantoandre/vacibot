@@ -39,7 +39,7 @@ class Database_Oracle(Database):
 
         if where_col and where_value:
             where_value = self.check_value(where_value)
-            query = query + " WHERE " + where_col + where_op + where_value
+            query = query + " WHERE " + where_col + where_op + str(where_value)
         
         con = cx_Oracle.connect(self.connection_params)
         cur = con.cursor()
@@ -63,14 +63,14 @@ class Database_Oracle(Database):
         if self.default_schema:
             table = self.default_schema + "." + table
 
-        query = "UPDATE " + table + " SET " + col + "=" + value + " WHERE " + where_col + where_op + where_value
+        query = "UPDATE " + table + " SET " + col + "=" + str(value) + " WHERE " + where_col + where_op + str(where_value)
 
         i=0
         while len(next_where)-i >= 3:
             where_col2   = next_where[i+0]
             where_value2 = self.check_value( next_where[i+1] )
             where_op2    = next_where[i+2]
-            query += " AND " + where_col2 + where_op2 + where_value2
+            query += " AND " + where_col2 + where_op2 + str(where_value2)
             i+=3
 
         self.execute(query)
