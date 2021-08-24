@@ -16,7 +16,7 @@ csv_file = "vacibot/scripts/vacinacoes_excluidas.csv"
 with open(csv_file, "a") as fp: 
     pass
 
-header, rows = db.fetch("vacibot_select", "IND_VACIVIDA_VACINACAO", "I")
+header, rows = db.fetch("vacibot_select", "IND_VACIVIDA_VACINACAO", "D")
 records = [ { header[i]:row[i] for i in range(len(header)) } for row in rows ]
 
 vacivida = Vacivida_Sys()
