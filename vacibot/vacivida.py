@@ -111,7 +111,7 @@ class Vacivida_Sys :
     # 2. Consulta CPF
     # @retry(stop_max_attempt_number=7)
     def consultacpf(self, cpf_paciente) :
-        self.CPFusuario = cpf_paciente
+        self.CPFusuario = str(cpf_paciente)
  
         response_cpf = requests.get('https://servico.vacivida.sp.gov.br/Paciente/cnsoucpf/'+self.CPFusuario,
                                     headers=self.headers, timeout=100)
