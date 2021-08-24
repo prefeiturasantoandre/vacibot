@@ -381,3 +381,22 @@ class Vacivida_Sys :
                             headers=self.headers, timeout=500)
         resp_text = json.loads(resp.text) 
         return resp_text["Data"]["vacinacao"]
+    
+    def delete_vacinacao(self, vacinacao_id):
+        resp = requests.put('https://servico.vacivida.sp.gov.br/Vacinacao/deletar-vacinacao/' + vacinacao_id, 
+                            headers=self.headers, timeout=500)
+
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de exclusão"
+        resp_text = json.loads(resp.text) 
+
+        if (resp_text['ValidationSummary'] != None) :
+            msg = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+            success = False
+        elif ("Registro excluído com Sucesso!" in resp_text['Message']) :
+            msg = str(resp_text['Message'])
+            success = True
+        else:
+            msg = f"Resposta da exclusão: \n{json.dumps(resp_text, indent=4)}"
+            success = False
+        return success, msg
