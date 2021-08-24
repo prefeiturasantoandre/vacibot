@@ -34,13 +34,18 @@ for record in records:
     for vacinacao in historico:
         if vacinacao["IdDose"] == di.dose_id[str(record["NUM_DOSE_VACINA"])]:
             vac_ids.append(vacinacao["IdVacinacao"])
-    vac_ids.pop(0)
+    if vac_ids:
+        vac_ids.pop(0)
 
+    succesful = True
     for vac_id in vac_ids:
         success, msg = vacivida.delete_vacinacao(vac_id)
         print( f"[SEQ_AGENDA={record['SEQ_AGENDA']} | IdVacinacao={vac_id}] {msg}" )
         with open(csv_file, "a") as fp:   
             # SEQ_AGENDA, IdVacinacao, IdPaciente, response_success, response_msg, datetime 
             fp.write(f"{record['SEQ_AGENDA']},{paciente_json['IdPaciente']},{vac_id},{success},{msg},{datetime.now()}\n")
+            if not success: 
+                succesful = False
 
-    db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",record["SEQ_AGENDA"])
+    if succesful:
+        db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",record["SEQ_AGENDA"])
