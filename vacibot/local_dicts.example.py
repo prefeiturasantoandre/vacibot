@@ -27,3 +27,5 @@ comorbidade_db = {	#{comorbidade_db:comorbidade_vacivida}
 	"Imunossuprimido" : "IMUNOSSUPRIMIDO",
 	"Terapia Renal Substitutiva/Diálise" : "TERAPIA RENAL SUBSTITUTIVA/DIALISE",
 }
+
+municipio = "id_municipio_vacivida"

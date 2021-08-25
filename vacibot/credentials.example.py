@@ -5,3 +5,5 @@ connection_params = 'user/password@hostname/oracledbname'
 login_vacivida = {  #{alias:credentials} onde credentials= ("LOGIN","SENHA")
     "Unidade A" : ("xxxxxx","yyyyyy"),
 }
+
+login_vacivida_adm = ("xxxxxx","yyyyyy")
