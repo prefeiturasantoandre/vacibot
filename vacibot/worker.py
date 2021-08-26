@@ -104,8 +104,8 @@ class Filler():
 
         # ESTADO 3 - inicia loop p/. tentar cadastrar paciente
         elif self.state == 3:
-            db.update("age_agendamento_covid", "ind_vacivida_cadastro", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+            #db.update("age_agendamento_covid", "ind_vacivida_cadastro", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+            #db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
             
             self.remaining_retry = MAX_RETRY -1
             self.state = 4
@@ -184,22 +184,22 @@ class Filler():
             historico = self.vacivida.get_historico_vacinacao( self.working_paciente_json["IdPaciente"] )
 
             # verifica se o paciente ainda não foi vacinado no Vacivida
-            on_vacivida = False
+            on_vacivida = 0
             for vacinacao in historico:
                 if vacinacao["IdDose"] == self.working_entry["NUM_DOSE_VACINA"]:
                     # vacinação já inserida no vacivida
-                    on_vacivida = True
-                    break
+                    on_vacivida += 1
             
-            if on_vacivida:
-                if self.working_entry['IND_VACIVIDA_VACINACAO'] != "T":
-                    # está inserido no vacivida e o bd aponta como não inserido (ou com alguma tag de erro)
-                    # atualiza bd
-                    db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
-                
-                #finaliza
-                self.state = 99
+            if on_vacivida == 1:
+                # já está inserido no vacivida - avança p/ estado de imunização bem sucedida
+                self.state = 10
+
+            elif on_vacivida > 1:           
+                # dose duplicada - avança p/ erro tratado
+                self.state = 16
+
             else:
+                # vacinação não inserida no vacivida
                 if self.working_entry['IND_VACIVIDA_VACINACAO'] == "T":
                     # não está inserido no vacivida e o bd aponta como inserido
                     # atualiza bd
@@ -259,10 +259,10 @@ class Filler():
                 self.error_message = imunizar_status
                 self.state = -1
                 
-        # ESTADO 10 - imunização registrada com sucesso
+        # ESTADO 10 - imunização registrada com sucesso // imunização já registrada
         elif self.state == 10:
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            #self._print("Vacinacao SEQ_AGENDA = ", self.working_entry['SEQ_AGENDA'], " atualizado para True")
+            if self.working_entry['IND_VACIVIDA_VACINACAO'] != "T":
+                db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
             self.state = 99
 
         # ESTADO 11 - erro no registro de imunização - 2a dose diferente da 1a
@@ -289,11 +289,20 @@ class Filler():
             self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Outros Erros"
             self.state = -2
 
-        # ESTADO 15 - erro no registro de imunização - 1a dose não inserida
+        # ESTADO 15 - erro no registro de imunização - 1a dose inválida
         elif self.state == 15:
-            # atualiza todos os registros do paciente p/ Falso, caso tenha ocorrido algum erro na inserção da 1a dose
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "I", "NUM_CPF",self.working_entry["NUM_CPF"])             
-            self.error_message = f"Vacinacoes de NUM_CPF = {self.working_entry['NUM_CPF']} atualizadas para Inconsistente"
+            tag = "P"
+            if self.working_entry['IND_VACIVIDA_VACINACAO'] != tag:
+                db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])            
+            self.error_message = f"Atualizado p/ P - 1a dose inválida"
+            self.state = -2
+            
+        # ESTADO 16 - imunização duplicada no histórico de imunização do vacivida
+        elif self.state == 16:
+            tag = "D"
+            if self.working_entry['IND_VACIVIDA_VACINACAO'] != tag:
+                db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+            self.error_message = f"Atualizado p/ D - Imunização duplicada no Vacivida"
             self.state = -2
             
         else:
