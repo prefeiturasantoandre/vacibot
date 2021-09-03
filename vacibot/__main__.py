@@ -421,6 +421,9 @@ def fetch_lotes(login):
     lotes_local = { key:{} for key in di.vacina_id}
 
     auth_message = ray.get(auth_future)
+    while auth_message != "Autenticado!":
+        auth_message = ray.get(vacivida.autenticar.remote(login))
+    
     response_future = [vacivida.get_lotes_vacina.remote(vacina) for vacina in lotes_local]
     print("Scrapper de lotes ", auth_message)
     
