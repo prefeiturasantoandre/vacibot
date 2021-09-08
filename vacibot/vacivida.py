@@ -128,7 +128,7 @@ class Vacivida_Sys :
         if ("Consulta realizada com sucesso! OBS.: Nenhum dado localizado com os Parâmetros enviados." in
                 resp_text['Message']) :
             # print("Usuário NÃO Cadastrado! CPF = ", self.CPFusuario)
-            self.consult_message = ("Usuário NÃO Cadastrado! CPF = "+self.CPFusuario)
+            self.consult_message = ("Usuário NÃO Cadastrado!")
 
             return None
 
@@ -144,7 +144,7 @@ class Vacivida_Sys :
 
         else :
             # print ("Erro na consulta do CPF!", self.CPFusuario)
-            self.consult_message = "Erro na consulta do CPF!"+self.CPFusuario
+            self.consult_message = "Erro na consulta do CPF!"
 
             return None
 
@@ -207,9 +207,9 @@ class Vacivida_Sys :
         resp_text = json.loads(response_incluir.text) 
 
         if (resp_text['ValidationSummary'] != None) :
-            cadastro_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage']) + " CPF : "+ paciente_json['CPF']
+            cadastro_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Incluído com Sucesso" in resp_text['Message']) :
-            cadastro_message = str(resp_text['Message']) + " CPF: "+paciente_json['CPF'] + " cadastrado"
+            cadastro_message = str(resp_text['Message'])+ " cadastrado"
         else:
             cadastro_message = f"Resposta do cadastro: \n{json.dumps(resp_text, indent=4)}"
 
@@ -267,12 +267,10 @@ class Vacivida_Sys :
         if (self.response_imunizar['ValidationSummary'] != None) :
             # print(self.dados_incluir['ValidationSummary']['Erros'][0]['ErrorMessage'])
             self.imunizar_message = str(
-                self.response_imunizar['ValidationSummary']['Erros'][0]['ErrorMessage'])+" CPF : "+\
-                                    self.objimunizacao['NUM_CPF']
+                self.response_imunizar['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Incluído com Sucesso" in self.response_imunizar['Message']) :
             # print("Incluido com sucesso")
-            self.imunizar_message = str(self.response_imunizar['Message'])+" CPF: "+self.objimunizacao[
-                'NUM_CPF']+" imunizado "
+            self.imunizar_message = str(self.response_imunizar['Message']) +" imunizado "
 
     def get_imunizar_message(self) :
         return self.imunizar_message
@@ -281,7 +279,7 @@ class Vacivida_Sys :
     def atualizar_paciente(self, objpaciente, paciente_json=None, id_paciente=None) :    #obrigatório paciente_json OU id_paciente
         if paciente_json == None:
             if id_paciente == None:
-                return None, f"Erro ao atualizar paciente. CPF: {objpaciente['NUM_CPF']}"
+                return None, f"Erro ao atualizar paciente."
             else:
                 paciente_json = parse_paciente_json(objpaciente)
                 paciente_json["IdPaciente"] = id_paciente
@@ -333,11 +331,10 @@ class Vacivida_Sys :
 
         if (resp_text['ValidationSummary'] != None) :
             # print(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
-            atualizacao_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])+" CPF : "+\
-                                    paciente_json['CPF']
+            atualizacao_message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Paciente Atualizado com Sucesso!" in resp_text['Message']) :
             # print("Atualizado com sucesso")
-            atualizacao_message = str(resp_text['Message']) + " CPF: "+paciente_json['CPF'] + " atualizado "
+            atualizacao_message = str(resp_text['Message']) + " atualizado "
         else:
             atualizacao_message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
