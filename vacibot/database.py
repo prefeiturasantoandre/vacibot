@@ -77,7 +77,7 @@ class Database_Oracle(Database):
 
     def insert(self, table, cols, values):
         for i in range(len(values)):
-                values[i] = self.check_value(values[i])
+                values[i] = str(self.check_value(values[i]))
         
         if self.default_schema:
             table = self.default_schema + "." + table
