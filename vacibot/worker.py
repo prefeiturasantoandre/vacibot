@@ -104,9 +104,6 @@ class Filler():
 
         # ESTADO 3 - inicia loop p/. tentar cadastrar paciente
         elif self.state == 3:
-            #db.update("age_agendamento_covid", "ind_vacivida_cadastro", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
-            #db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
-            
             self.remaining_retry = MAX_RETRY -1
             self.state = 4
 
@@ -118,6 +115,8 @@ class Filler():
 
             if ("Incluído com Sucesso" in cadastrar_status) :
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                self.working_entry['IND_VACIVIDA_CADASTRO'] = 'T'
+                
                 #avança p/ próximo estado
                 self.state = 8       
             elif self.remaining_retry > 0:
@@ -143,11 +142,13 @@ class Filler():
                 # se o pré-cadastro do vacivida apresenda dados inconsistentes e precisa ser atualizado
                 #self._print("Necessário atualizar o paciente", self.working_entry['NUM_CPF'])
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "U", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                self.working_entry['IND_VACIVIDA_CADASTRO'] = 'U'
                 self.state = 6
             else:
                 if self.working_entry["IND_VACIVIDA_CADASTRO"] != "T":
                     # atualiza o IND_VACIVIDA_CADASTRO para True
                     db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                    self.working_entry['IND_VACIVIDA_CADASTRO'] = 'T'
                 self.state = 8
                 
         # ESTADO 6 - inicia loop p/. tentar atualizar paciente
@@ -163,6 +164,7 @@ class Filler():
             if ("atualizado" in atualizacao_message) :
                 self.working_paciente_json = paciente_json
                 db.update("age_agendamento_covid", "ind_vacivida_cadastro", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                self.working_entry['IND_VACIVIDA_CADASTRO'] = 'T'
                 #avança
                 self.state = 8
             elif self.remaining_retry > 0:
@@ -204,6 +206,7 @@ class Filler():
                     # não está inserido no vacivida e o bd aponta como inserido
                     # atualiza bd
                     db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+                    self.working_entry['IND_VACIVIDA_VACINACAO'] = 'F'
 
                 if self.working_entry["DSC_PUBLICO"] == di.grupo_id["COMORBIDADE"] and self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['2']:
                     # 2a dose do público de comorbidades precisa utilizar o mesmo CRM
