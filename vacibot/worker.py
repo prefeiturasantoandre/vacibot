@@ -3,7 +3,21 @@ from vacivida import Vacivida_Sys
 from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT, MAX_WORKERS
 import dicts as di
 
-logging.basicConfig(filename="logs/worker.log", level=logging.ERROR)
+formatter = logging.Formatter('%(asctime)s %(levelname)-8s %(message)s')
+
+logger = logging.getLogger("filler")
+logger.setLevel(logging.DEBUG)
+file_handler = logging.handlers.TimedRotatingFileHandler(filename="logs/filler.log", when='midnight', backupCount=30)
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+err_logger = logging.getLogger("err_filler")
+err_logger.setLevel(logging.ERROR)
+err_file_handler = logging.handlers.TimedRotatingFileHandler(filename="logs/filler.err", when='midnight', backupCount=30)
+err_file_handler.setLevel(logging.ERROR)
+err_file_handler.setFormatter(formatter)
+err_logger.addHandler(err_file_handler)
 
 class Filler():
     def __init__(self, id, area, cadastros, login, run=False):
@@ -46,26 +60,31 @@ class Filler():
             self.error_state = 0
             while True:
                 # condições de parada
+                log_info = None
                 if  self.state == 99:
-                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Sucesso")
-                    try:
-                        db.insert('AGE_VACIBOT_LOG', ["SEQ_AGENDA","IND_VACIVIDA_ESTADO","MSG_LOG","BOT_ERROR_STATE","DTA_LOG"],
-                            [self.working_entry["SEQ_AGENDA"],'S','Finalizado com Sucesso','','SYSTIMESTAMP'])
-                    except: pass
-                    break
-                elif self.state == -1:
-                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro: {self.error_message}")
-                    try:
-                        db.insert('AGE_VACIBOT_LOG', ["SEQ_AGENDA","IND_VACIVIDA_ESTADO","MSG_LOG","BOT_ERROR_STATE","DTA_LOG"],
-                            [self.working_entry["SEQ_AGENDA"],'E',f'Finalizado com Erro: {self.error_message}',self.error_state,'SYSTIMESTAMP'])
-                    except: pass
-                    break
+                    msg = f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Sucesso"
+                    self._print(msg)
+                    logger.info(msg)
+                    log_info  = 'S','Finalizado com Sucesso',''
+                elif self.state in (-1,-3):
+                    msg = f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro: {self.error_message}"
+                    self._print(msg)
+                    logger.error(msg)
+                    if self.state == -3: break   # finaliza execução e não registra o log de -3 no bd
+                    log_info  = 'E',f'Finalizado com Erro: {self.error_message}',self.error_state
                 elif self.state == -2:
-                    self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro Tratado: {self.error_message}")
+                    msg = f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Erro Tratado: {self.error_message}"
+                    self._print(msg)
+                    logger.error(msg)
+                    log_info  = 'T',f'Finalizado com Erro Tratado: {self.error_message}',self.error_state
+
+                if log_info:
                     try:
                         db.insert('AGE_VACIBOT_LOG', ["SEQ_AGENDA","IND_VACIVIDA_ESTADO","MSG_LOG","BOT_ERROR_STATE","DTA_LOG"],
-                            [self.working_entry["SEQ_AGENDA"],'T',f'Finalizado com Erro Tratado: {self.error_message}',self.error_state,'SYSTIMESTAMP'])
-                    except: pass
+                            [self.working_entry["SEQ_AGENDA"],*log_info,'SYSTIMESTAMP'])
+                    except Exception as e:
+                        logger.error(f"Exception lançada ao registrar log no bd | log_info={str(log_info)}")
+                        err_logger.exception(e)
                     break
 
                 # execução
@@ -73,16 +92,18 @@ class Filler():
                     self.step()
                     #self._print(self.id,self.vacivida.login_token[-44:])     #debug
                 except Exception as e:
-                    self.state = -1
+                    self.state = -3
                     self.error_message = "CRITICAL - Um Exception lançado no processamento do cadastro."
-                    logging.exception(f"CRITICAL - Um Exception lançado no processamento do cadastro: {self.working_entry}")
+                    err_logger.exception(f"CRITICAL - Um Exception lançado no processamento do cadastro: {self.working_entry}")
         return True
             
     def step(self):
         if not self.authenticated:
                 self.autenticar()
 
-        # ESTADO -1 - erro
+        # ESTADO -1 - erro do vacivida
+        # ESTADO -2 - erro do vacivida tratado
+        # ESTADO -3 - erro no automato(sem log no bd)
         # ESTADO 0 - não em execução
         # ESTADO 99 - finalizado
 

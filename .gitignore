@@ -135,6 +135,8 @@ vacibot/lotes.json
 vacibot/lotes_erro.csv
 lotes.json
 *.csv
+*.log
+*.err
 
 # IDE
 .vscode/
