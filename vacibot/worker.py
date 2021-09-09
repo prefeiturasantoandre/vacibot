@@ -50,7 +50,7 @@ class Filler():
                     self._print(f"[SEQ_AGENDA={self.working_entry['SEQ_AGENDA']}] Finalizado com Sucesso")
                     try:
                         db.insert('AGE_VACIBOT_LOG', ["SEQ_AGENDA","IND_VACIVIDA_ESTADO","MSG_LOG","BOT_ERROR_STATE","DTA_LOG"],
-                            [self.working_entry["SEQ_AGENDA"],'S','Finalizado com Sucesso',None,'SYSTIMESTAMP'])
+                            [self.working_entry["SEQ_AGENDA"],'S','Finalizado com Sucesso','','SYSTIMESTAMP'])
                     except: pass
                     break
                 elif self.state == -1:
