@@ -129,7 +129,8 @@ class RegisterBatch() :
                          self.list_index[22] : str(list_agenda_line[22]),  # 'DSC_COMORBIDADES'
                          self.list_index[23] : str(list_agenda_line[23]),  # 'IND_VACIVIDA_CADASTRO'
                          self.list_index[24] : str(list_agenda_line[24]),  # 'IND_VACIVIDA_VACINACAO'
-                         self.list_index[25] : str(list_agenda_line[25])   # 'DSC_AREA'
+                         self.list_index[25] : str(list_agenda_line[25]),  # 'DSC_AREA'
+                         self.list_index[26] : str(list_agenda_line[26])   # 'DS_GRUPO_ATENDIMENTO'
                          }
 
             # OTHERS KEYS:
@@ -244,58 +245,36 @@ class RegisterBatch() :
                 self.dict['TPO_SEXO'] = "F"
 
 
-            self.comorblist = []
+            self.comorbset = set()
 
             # parse grupo
-            if   ("IDOSOS" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "BA0E494756847EBFE053D065C70AE389"
-            elif ("SAÚDE" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "B83C80018F62B8B5E053D065C70AB1BB"
-            elif ("EDUCAÇÃO" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "BF67A4F62608FD42E053D065C70A7D70"
-            elif ("SEGURANÇA" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "BEC82DAA494479CEE053D065C70A2277"
-            elif ("DEFICIÊNCIA" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "C1AB0FA7CA550BEDE053D065C70ADE01"
-            elif ("COMORBIDADES" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]
-                for comorb in di.comorbidade_db:
-                    #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorblist
-                    if comorb in self.dict['DSC_COMORBIDADES'] :
-                        self.comorblist.append(di.comorbidade_id[ di.comorbidade_db[comorb] ])
-
-            elif ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
-                self.comorblist.append(di.comorbidade_id["SINDROME DE DOWN"])
+            # regras especiais
+            if ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
+                self.comorbset.add(di.comorbidade_id["SINDROME DE DOWN"])
             elif ("HEMODIÁLISE" in self.dict['DSC_PUBLICO']) :
                 # hemodialise -> doenca renal cronica
-                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
-                self.comorblist.append(di.comorbidade_id["DOENCA RENAL CRONICA"])
+                self.comorbset.add(di.comorbidade_id["DOENCA RENAL CRONICA"])
             elif ("IMUNOSSUPRESSOR" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = di.grupo_id["COMORBIDADE"]  # mesmo que comorbidade
-                self.comorblist.append(di.comorbidade_id["IMUNOSSUPRIMIDO"])
-            elif ("MOTORISTAS E COBRADORES" in self.dict['DSC_PUBLICO']) :
-                self.dict['DSC_PUBLICO'] = "C2379A994B453C7BE053D065C70AB01D"
+                self.comorbset.add(di.comorbidade_id["IMUNOSSUPRIMIDO"])
             elif ("GESTANTES, PUÉRPERAS E LACTANTES" in self.dict['DSC_PUBLICO']) :    
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"   #população geral
+                self.dict['TPO_SEXO'] = "F"
                 if( not ( ("GESTANTE" in self.dict['DSC_COMORBIDADES']) or ("PUÉRPERA" in self.dict['DSC_COMORBIDADES']) or ("LACTANTE" in self.dict['DSC_COMORBIDADES'])) ): #se não foi coletado a distinção, atribuir 'gestante'
                     self.dict['GESTANTE'] = True
-                    self.dict['DSC_COMORBIDADES'] = "C1BDD007AB971C7DE053D065C70A7835"
-                    self.dict['TPO_SEXO'] = "F"
-            elif ("PESSOAS ENTRE" in self.dict['DSC_PUBLICO']):
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
-            elif ("AGENTES DE TRÂNSITO E DEFESA CIVIL" in self.dict['DSC_PUBLICO']):
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
-            elif ("PROFISSIONAIS DE LIMPEZA URBANA" in self.dict['DSC_PUBLICO']):
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
-            elif ("MOTORISTAS E AUXILIARES DE TRANSPORTE ESCOLAR" in self.dict['DSC_PUBLICO']):
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
-            elif ("PÚBLICO GERAL" in self.dict['DSC_PUBLICO']):
-                self.dict['DSC_PUBLICO'] = "C3CA9D0EC1B77C5BE053D065C70A77DC"
-            else :
-                parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DSC_PUBLICO']}"          
 
-            self.dict['COMORBLIST'] = self.comorblist
+            # grupo
+            if self.dict['DS_GRUPO_ATENDIMENTO'] in di.grupo_id:
+                self.dict['DSC_PUBLICO'] = di.grupo_id[self.dict['DS_GRUPO_ATENDIMENTO']]
+
+                if self.dict['DS_GRUPO_ATENDIMENTO'] == 'COMORBIDADE':
+                    for comorb in di.comorbidade_db:
+                        #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorbset
+                        if comorb in self.dict['DSC_COMORBIDADES'] :
+                            self.comorbset.add(di.comorbidade_id[ di.comorbidade_db[comorb] ])
+            else :
+                parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
+
+
+            self.dict['COMORBLIST'] = list(self.comorbset)
 
             # parse dose
             self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
