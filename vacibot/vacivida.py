@@ -1,5 +1,5 @@
 import json, requests, time
-from dicts import vacina_id
+from dicts import vacina_id, grupo_id
 
 def parse_paciente_json(objpaciente, id_paciente=""):
     paciente_json = {
@@ -36,7 +36,36 @@ def parse_paciente_json(objpaciente, id_paciente=""):
     }
 
     return paciente_json
+def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
+    vacinacao_json = {
+        "IdGrupoAtendimento":str(objimunizacao["DSC_PUBLICO"]),
+        "IdEstrategia":objimunizacao["ESTRATEGIA"],
+        "IdImunobiologico":objimunizacao["DSC_TIPO_VACINA"],
+        "IdDose":objimunizacao["NUM_DOSE_VACINA"],
+        "DataVacinacao":objimunizacao["DTA_COMPARECIMENTO_PESSOA"],
+        "DataAprazamento":objimunizacao["DTA_APRAZAMENTO"],
+        "IdLote":objimunizacao["NUM_LOTE_VACINA"],
+        "IdViaAdministracao":objimunizacao["VIA_ADMINISTRACAO"],
+        "IdLocalAplicacao":objimunizacao["LOCAL_APLICACAO"],
+        "IdVacinador":objimunizacao["VACINADOR"],
+        "IdPaciente":objimunizacao["ID_PACIENTE"],
+        "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"],
+        "IdMotivoDoseAdicional":None,
+        "IdPaisPrimeiraDose":None,
+        "IdUFPrimeiraDose":None,
+        "PrimeiraDoseOutroEstado":None,
+        "PrimeiraDoseOutroPais":None,
+    }
+    if (objimunizacao['DSC_PUBLICO'] == grupo_id["COMORBIDADE"]) :
+        vacinacao_json["IdComorbidade"]          = objimunizacao["COMORBLIST"]
+        vacinacao_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"]
+        vacinacao_json["DescricaoBPC"]           = None
 
+    if id_vacinacao:
+        vacinacao_json["IdVacinacao"]   = id_vacinacao
+        vacinacao_json["FlagInvalido"]  = 0
+
+    return vacinacao_json
 # Funcoes referentes ao Vacivida
 class Vacivida_Sys :
     def __init__(self) :
@@ -223,42 +252,14 @@ class Vacivida_Sys :
         self.objimunizacao = objimunizacao
          # print('LOG! = ', self.objimunizacao)
 
-        imunizar_json = {
-            "IdGrupoAtendimento":str(objimunizacao["DSC_PUBLICO"]),
-            "IdEstrategia":objimunizacao["ESTRATEGIA"],
-            "IdImunobiologico":objimunizacao["DSC_TIPO_VACINA"],
-            "IdDose":objimunizacao["NUM_DOSE_VACINA"],
-            "DataVacinacao":objimunizacao["DTA_COMPARECIMENTO_PESSOA"],
-            "DataAprazamento":objimunizacao["DTA_APRAZAMENTO"],
-            "IdLote":objimunizacao["NUM_LOTE_VACINA"],
-            "IdViaAdministracao":objimunizacao["VIA_ADMINISTRACAO"],
-            "IdLocalAplicacao":objimunizacao["LOCAL_APLICACAO"],
-            "IdVacinador":objimunizacao["VACINADOR"],
-            "IdPaciente":objimunizacao["ID_PACIENTE"],
-            "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"],
-            "IdMotivoDoseAdicional":None,
-            "IdPaisPrimeiraDose":None,
-            "IdUFPrimeiraDose":None,
-            "PrimeiraDoseOutroEstado":None,
-            "PrimeiraDoseOutroPais":None,
-        }
-        from dicts import grupo_id
-        if (objimunizacao['DSC_PUBLICO'] == grupo_id["COMORBIDADE"]) :
-            imunizar_json["IdComorbidade"]          = objimunizacao["COMORBLIST"]
-            imunizar_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"]
-            imunizar_json["VacinacaoComorbidade"]   = [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ]
-            imunizar_json["DescricaoBPC"]           = None
-
-
         self.data_imunizar = {
-            "Data":imunizar_json,
+            "Data": parse_vacinacao_json(objimunizacao) ,
             "AccessToken":self.login_token
         }
 
         #print( json.dumps(self.data_imunizar, indent=4))
         response_imunizar = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-Vacinacao',
                                           headers=self.headers, json=self.data_imunizar, timeout=500)
-        time.sleep(5)
         # print(response_imunizar)
         self.response_imunizar = response_imunizar
 
@@ -321,9 +322,6 @@ class Vacivida_Sys :
             "Data":paciente_json,
             "AccessToken":self.login_token
         }
-
-        time.sleep(5)
-        #print("DEBUG - Data update = ", data)
 
         resp = requests.put('https://servico.vacivida.sp.gov.br/Paciente/atualizar-paciente',
                                          headers=self.headers, json=data, timeout=500)
@@ -402,3 +400,29 @@ class Vacivida_Sys :
             msg = f"Resposta da exclusão: \n{json.dumps(resp_text, indent=4)}"
             success = False
         return success, msg
+
+    def atualizar_vacinacao(self, objpaciente, id_vacinacao) :    #obrigatório paciente_json OU id_paciente
+        data = {
+            "Data": parse_vacinacao_json(objpaciente,id_vacinacao),
+            "AccessToken":self.login_token
+        }
+
+        try:
+            resp = requests.put('https://servico.vacivida.sp.gov.br/Vacinacao/alterar-vacinacao',
+                                         headers=self.headers, json=data, timeout=500)
+        except Exception as e:
+            return False, e
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de exclusão"
+
+        resp_text = json.loads(resp.text) 
+
+        if (resp_text['ValidationSummary'] != None) :
+            message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Alterado com Sucesso!!" in resp_text['Message']) :
+            message = str(resp_text['Message']) + " imunizacao atualizada"
+        else:
+            message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
+
+        #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
+        return resp_text["Data"], message

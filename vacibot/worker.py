@@ -58,6 +58,7 @@ class Filler():
             self.remaining_retry = 0
             self.error_message = ""
             self.error_state = 0
+            self.id_vacinacao = None
             while True:
                 # condições de parada
                 log_info = None
@@ -220,14 +221,28 @@ class Filler():
 
             # verifica se o paciente ainda não foi vacinado no Vacivida
             on_vacivida = 0
+            vacs = []
             for vacinacao in historico:
                 if vacinacao["IdDose"] == self.working_entry["NUM_DOSE_VACINA"]:
                     # vacinação já inserida no vacivida
                     on_vacivida += 1
+                    vacs.append(vacinacao)
             
             if on_vacivida == 1:
-                # já está inserido no vacivida - avança p/ estado de imunização bem sucedida
-                self.state = 10
+                # já está inserido no vacivida -
+                if self.working_entry["IND_VACIVIDA_VACINACAO"] == "U":
+                    # recebeu flag de atualização
+                    if vacs[0]["IdMunicipio"] == self.working_entry["MUNICIPIO"]:
+                        # verifica se o município está correto
+                        # avança p/ atualização
+                        self.id_vacinacao = vacs[0]["IdVacinacao"]
+                        self.state = 30
+                    else:
+                        # avança p/ estado de erro tratado
+                        self.state = 17
+                else:
+                    # avança p/ estado de imunização bem sucedida
+                    self.state = 10
 
             elif on_vacivida > 1:           
                 # dose duplicada - avança p/ erro tratado
@@ -340,6 +355,44 @@ class Filler():
                 db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
             self.error_message = f"Atualizado p/ D - Imunização duplicada no Vacivida"
             self.state = -2
+
+        # ESTADO 17 - erro na atualização da imunização - dose registrada por outro município 
+        elif self.state == 16:
+            tag = "M"
+            if self.working_entry['IND_VACIVIDA_VACINACAO'] != tag:
+                db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
+            self.error_message = f"Atualizado p/ M - Imunização não atualizada - dose registrada por outro município"
+            self.state = -2
+
+        # ESTADO 30 - inicia loop p/. tentar atualizar imunização
+        elif self.state == 30:
+            self.working_entry['ID_PACIENTE'] = self.working_paciente_json["IdPaciente"]
+
+            self.remaining_retry = MAX_RETRY -1
+            self.state = 31
+
+        # ESTADO 31 - loop de cadastro de imunização
+        elif self.state == 31:
+            vacinacao_json, att_msg = self.vacivida.atualizar_vacinacao(self.working_entry, self.id_vacinacao)
+            #self._print(imunizar_status)
+
+            if ("Alterado com Sucesso" in att_msg) :
+                #avança
+                self.state = 10
+            elif self.remaining_retry > 0:
+                #se mantém no mesmo estado até alcançar MAX_RETRY
+                #self._print("Tentativas restantes: ", self.remaining_retry)
+                self.remaining_retry = self.remaining_retry - 1
+                
+                # verifica o erro
+                self.check_record_error(att_msg)
+            else:
+                #finaliza com erro quando atinge MAX_RETRY tentativas
+                # atribui parametros do erro e avança para o estado de erro
+                self.error_state = self.state
+                self.error_message = att_msg
+                self.state = -1
+                
             
         else:
             self.error_message = "CRITICAL - Estado inválido: "+str(self.state)
