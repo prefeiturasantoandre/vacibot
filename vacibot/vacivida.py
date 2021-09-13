@@ -36,6 +36,7 @@ def parse_paciente_json(objpaciente, id_paciente=""):
     }
 
     return paciente_json
+    
 def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
     vacinacao_json = {
         "IdGrupoAtendimento":str(objimunizacao["DSC_PUBLICO"]),
@@ -60,6 +61,7 @@ def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
         vacinacao_json["IdComorbidade"]          = objimunizacao["COMORBLIST"]
         vacinacao_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"]
         vacinacao_json["DescricaoBPC"]           = None
+        vacinacao_json["VacinacaoComorbidade"]   = [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ]
 
     if id_vacinacao:
         vacinacao_json["IdVacinacao"]   = id_vacinacao
