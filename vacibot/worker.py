@@ -256,11 +256,14 @@ class Filler():
                     db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                     self.working_entry['IND_VACIVIDA_VACINACAO'] = 'F'
 
-                if self.working_entry["DSC_PUBLICO"] == di.grupo_id["COMORBIDADE"] and self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['2']:
-                    # 2a dose do público de comorbidades precisa utilizar o mesmo CRM
+                if self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['2']:
+                    # replica os mesmos parâmetros da 1a dose
                     for vacinacao in historico:
                         if vacinacao["IdDose"] == di.dose_id["1"]:
-                            self.working_entry["NUM_CRM"] = vacinacao["CRMComorbidade"]
+                            self.working_entry["NUM_CRM"]       = vacinacao["CRMComorbidade"]
+                            self.working_entry["DSC_PUBLICO"]   = vacinacao['IdGrupoAtendimento']
+                            self.working_entry["ESTRATEGIA"]    = vacinacao['IdEstrategia']
+                            
                  
                 # avança para o próximo estado
                 self.state = 8.1
