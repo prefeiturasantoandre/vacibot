@@ -56,6 +56,22 @@ class Database_Oracle(Database):
 
         return header, rows
 
+    def fetch_q(self, query):        
+        con = cx_Oracle.connect(self.connection_params)
+        cur = con.cursor()
+        cur.execute(query)
+
+        header = []
+        rows = []
+        for i in cur.description :
+            header.append(i[0])
+        for result in cur :
+            rows.append(result)
+
+        con.close()
+
+        return header, rows
+
     def update(self, table, col, value, where_col, where_value, where_op="=", *next_where):
         value = self.check_value(value)
         where_value = self.check_value(where_value)
