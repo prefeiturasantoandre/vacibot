@@ -305,38 +305,18 @@ class RegisterBatch() :
 
 
             # calcula aprazamento e parser datas
-            # print ("DEBUG - Data comparecimento = ", self.dict['DTA_COMPARECIMENTO_PESSOA'])
-
-            # coronavac
-            if (self.dict['DSC_TIPO_VACINA'] == "b309a279-f8b8-4023-b393-ed32723127ea") :
-                # datetime_object = datetime.strptime(self.dict['DTA_COMPARECIMENTO_PESSOA'], '%Y-%m-%dT%H:%M:%S.000Z')
-                datetime_object = self.dict['DTA_COMPARECIMENTO_PESSOA']
-                # print(datetime_object)
-                somadatas = (datetime_object+timedelta(days=28))
-                # print(somadatas)
-                somadatas = somadatas.strftime("%Y-%m-%dT%H:%M:%S")
-                # print ('SOMADATAS CORONAVAC = ' + somadatas)
-
-                self.dict['DTA_APRAZAMENTO'] = str(somadatas+".000Z")
-                # print ("Data aprazamento parseado = " + self.dict['DTA_APRAZAMENTO'])
-                # print("data aprazamento "+somadatas)
-
-            # astrazeneca ou pfizer
-            elif (self.dict['DSC_TIPO_VACINA'] in ["B9BAB192F78A60DBE053D065C70A09F3", "7694aac0-dedc-4d79-8639-61962efdad08"]) :
-                # datetime_object = datetime.strptime(self.dict['DTA_COMPARECIMENTO_PESSOA'], '%Y-%m-%dT%H:%M:%S.000Z')
-                datetime_object = self.dict['DTA_COMPARECIMENTO_PESSOA']
-                # print(datetime_object)
-                somadatas = (datetime_object+timedelta(days=84))
-                # print(somadatas)
-                somadatas = somadatas.strftime("%Y-%m-%dT%H:%M:%S")
-                # print('SOMADATAS ASTRAZENECA = '+somadatas)
-
-                self.dict['DTA_APRAZAMENTO'] = str(somadatas+".000Z")
-                # print("Data aprazamento parseado = "+ self.dict['DTA_APRAZAMENTO'])
-                # print("data aprazamento "+somadatas)
-
-            # janssen
+            aprazamento = None
+            if self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Coronavac"]:
+                aprazamento = 28
+            elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["AstraZeneca"]:
+                aprazamento = 84
+            elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
+                aprazamento = 56
+            
+            if aprazamento:
+                self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
             else:
+                # janssen
                 self.dict['DTA_APRAZAMENTO'] = None
 
             # print (self.dict['DTA_COMPARECIMENTO_PESSOA'])
