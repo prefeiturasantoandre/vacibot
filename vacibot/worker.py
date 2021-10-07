@@ -360,7 +360,7 @@ class Filler():
             self.state = -2
 
         # ESTADO 17 - erro na atualização da imunização - dose registrada por outro município 
-        elif self.state == 16:
+        elif self.state == 17:
             tag = "M"
             if self.working_entry['IND_VACIVIDA_VACINACAO'] != tag:
                 db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
