@@ -239,6 +239,7 @@ class Filler():
                         self.state = 30
                     else:
                         # avança p/ estado de erro tratado
+                        self.error_state = self.state
                         self.state = 17
                 else:
                     # avança p/ estado de imunização bem sucedida
@@ -246,6 +247,7 @@ class Filler():
 
             elif on_vacivida > 1:           
                 # dose duplicada - avança p/ erro tratado
+                self.error_state = self.state
                 self.state = 16
 
             else:
