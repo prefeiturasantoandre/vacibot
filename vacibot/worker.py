@@ -287,16 +287,6 @@ class Filler():
                 self.state = 10
             elif "Já existe uma primeira dose para o esquema vacinal atual" in imunizar_status :
                 self.state = 10
-            elif ("Não é permitido que a 2ª dose da vacina seja diferente da 1ª dose CPF" in imunizar_status) :
-                self.state = 11
-            elif ("A primeira dose do paciente não está registrado no VaciVida." in imunizar_status) :
-                self.state = 12
-            elif ("Não é permitido vacinar paciente menor de 18 anos de idade" in imunizar_status) :
-                self.state = 13
-            elif ("Paciente não possui 1a dose válida." in imunizar_status) :
-                self.state = 15
-            elif ("Erro" in imunizar_status) :
-                self.state = 14
 
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
@@ -319,37 +309,11 @@ class Filler():
                 db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "T", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
             self.state = 99
 
-        # ESTADO 11 - erro no registro de imunização - 2a dose diferente da 1a
-        elif self.state == 11:
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "E", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Erro"
-            self.state = -2
-
-        # ESTADO 12 - erro no registro de imunização - 2a dose sem a 1a cadastrada no VaciVida
-        elif self.state == 12:
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "I", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Inconsistente"
-            self.state = -2
-
-        # ESTADO 13 - erro no registro de imunização - data de nascimento incorreta
-        elif self.state == 13:
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "X", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Data de Nascimento Incorreto"
-            self.state = -2
-
-        # ESTADO 14 - erro no registro de imunização - outros
-        elif self.state == 14:
-            db.update("age_agendamento_covid", "ind_vacivida_vacinacao", "Y", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])                   
-            self.error_message = f"Vacinacao SEQ_AGENDA = {self.working_entry['SEQ_AGENDA']} atualizado para Outros Erros"
-            self.state = -2
-
-        # ESTADO 15 - erro no registro de imunização - 1a dose inválida
-        elif self.state == 15:
-            tag = "P"
-            if self.working_entry['IND_VACIVIDA_VACINACAO'] != tag:
-                db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO",tag, "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])            
-            self.error_message = f"Atualizado p/ P - 1a dose inválida"
-            self.state = -2
+        # ESTADO 11 [descontinuado] - erro no registro de imunização - 2a dose diferente da 1a
+        # ESTADO 12 [descontinuado] - erro no registro de imunização - 2a dose sem a 1a cadastrada no VaciVida
+        # ESTADO 13 [descontinuado] - erro no registro de imunização - data de nascimento incorreta
+        # ESTADO 14 [descontinuado] - erro no registro de imunização - outros
+        # ESTADO 15 [descontinuado] - erro no registro de imunização - 1a dose inválida
             
         # ESTADO 16 - imunização duplicada no histórico de imunização do vacivida
         elif self.state == 16:
