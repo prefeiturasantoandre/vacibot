@@ -277,9 +277,22 @@ class RegisterBatch() :
             self.dict['COMORBLIST'] = list(self.comorbset)
 
             # parse dose
+            #verifica se é dose adicional
+            if self.dict['NUM_DOSE_VACINA'] == '3':
+                self.dict['NUM_DOSE_VACINA'] = 'Adicional'
+                self.dict["FlagDoseAdicional"] = 1
+                self.dict["IdMotivoDoseAdicional"] = "CADE90995A0CB400E053D065C70A06DC"
+                self.dict["DescricaoMotivoDoseAdicional"] = "PESSOA >= 60 ANOS"
+                if self.dict['DSC_PUBLICO'] in ( di.grupo_id['IDOSO'], di.grupo_id['IDOSO EM ILPI'] ):
+                    self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['PESSOA >= 60 ANOS']
+                elif di.comorbidade_id['IMUNOSSUPRIMIDO'] in self.dict['COMORBLIST']:
+                    self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['IMUNOSSUPRIMIDO']
+                else:
+                    parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
+
             self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
             if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
-                self.dict['NUM_DOSE_VACINA'] = "B8A51B8A4CF6F4E9E053D065C70A556D"       #dose única
+                self.dict['NUM_DOSE_VACINA'] = di.dose_id["Unica"]       #dose única
 
 
             # parse tipo de vacina e lote

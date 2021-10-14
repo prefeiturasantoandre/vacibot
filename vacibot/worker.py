@@ -60,6 +60,7 @@ class Filler():
             self.error_state = 0
             self.id_vacinacao = None
             while True:
+                #print(self.state) #debug
                 # condições de parada
                 log_info = None
                 if  self.state == 99:
@@ -219,7 +220,16 @@ class Filler():
         elif self.state == 8:
             historico = self.vacivida.get_historico_vacinacao( self.working_paciente_json["IdPaciente"] )
 
-            # verifica se o paciente ainda não foi vacinado no Vacivida
+            # verifica se não é a 1a dose
+            if self.working_entry["NUM_DOSE_VACINA"] in (di.dose_id['2'], di.dose_id['Adicional']):
+                # replica os mesmos parâmetros da 1a dose p/ 2a dose e dose adicional
+                for vacinacao in historico:
+                    if vacinacao["IdDose"] in (di.dose_id["1"], di.dose_id['Unica']):
+                        self.working_entry["NUM_CRM"]       = vacinacao["CRMComorbidade"]
+                        self.working_entry["DSC_PUBLICO"]   = vacinacao['IdGrupoAtendimento']
+                        self.working_entry["ESTRATEGIA"]    = vacinacao['IdEstrategia']
+
+            # verifica se a dose já foi inserida no Vacivida
             on_vacivida = 0
             vacs = []
             for vacinacao in historico:
@@ -252,20 +262,12 @@ class Filler():
 
             else:
                 # vacinação não inserida no vacivida
+
+                # verifica se o bd aponta como inserido
                 if self.working_entry['IND_VACIVIDA_VACINACAO'] == "T":
-                    # não está inserido no vacivida e o bd aponta como inserido
                     # atualiza bd
                     db.update("age_agendamento_covid", "IND_VACIVIDA_VACINACAO", "F", "SEQ_AGENDA",self.working_entry["SEQ_AGENDA"])
                     self.working_entry['IND_VACIVIDA_VACINACAO'] = 'F'
-
-                if self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['2']:
-                    # replica os mesmos parâmetros da 1a dose
-                    for vacinacao in historico:
-                        if vacinacao["IdDose"] == di.dose_id["1"]:
-                            self.working_entry["NUM_CRM"]       = vacinacao["CRMComorbidade"]
-                            self.working_entry["DSC_PUBLICO"]   = vacinacao['IdGrupoAtendimento']
-                            self.working_entry["ESTRATEGIA"]    = vacinacao['IdEstrategia']
-                            
                  
                 # avança para o próximo estado
                 self.state = 8.1
@@ -279,8 +281,10 @@ class Filler():
 
         # ESTADO 9 - loop de cadastro de imunização
         elif self.state == 9:
-            self.vacivida.imunizar(self.working_entry)
-            imunizar_status = self.vacivida.get_imunizar_message()
+            if self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['Adicional']:
+                vacinacao_json, imunizar_status = self.vacivida.inserir_dose_adicional(self.working_entry)
+            else:
+                vacinacao_json, imunizar_status = self.vacivida.imunizar(self.working_entry)
             #self._print(imunizar_status)
 
             if ("Incluído com Sucesso" in imunizar_status) :
@@ -340,10 +344,12 @@ class Filler():
             self.remaining_retry = MAX_RETRY -1
             self.state = 31
 
-        # ESTADO 31 - loop de cadastro de imunização
+        # ESTADO 31 - loop de atualização de imunização
         elif self.state == 31:
-            vacinacao_json, att_msg = self.vacivida.atualizar_vacinacao(self.working_entry, self.id_vacinacao)
-            #self._print(imunizar_status)
+            if self.working_entry["NUM_DOSE_VACINA"] == di.dose_id['Adicional']:
+                vacinacao_json, att_msg = self.vacivida.atualizar_vacinacao_adicional(self.working_entry, self.id_vacinacao)
+            else:
+                vacinacao_json, att_msg = self.vacivida.atualizar_vacinacao(self.working_entry, self.id_vacinacao)
 
             if ("Alterado com Sucesso" in att_msg) :
                 #avança

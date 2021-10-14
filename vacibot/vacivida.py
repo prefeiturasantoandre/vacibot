@@ -51,7 +51,9 @@ def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
         "IdVacinador":objimunizacao["VACINADOR"],
         "IdPaciente":objimunizacao["ID_PACIENTE"],
         "IdEstabelecimento":objimunizacao["ESTABELECIMENTO"],
-        "IdMotivoDoseAdicional":None,
+        "IdMotivoDoseAdicional":objimunizacao.get("IdMotivoDoseAdicional"),
+        # "FlagDoseAdicional":objimunizacao.get("FlagDoseAdicional"),
+        # "DescricaoMotivoDoseAdicional":objimunizacao.get("DescricaoMotivoDoseAdicional"),
         "IdPaisPrimeiraDose":None,
         "IdUFPrimeiraDose":None,
         "PrimeiraDoseOutroEstado":None,
@@ -228,7 +230,6 @@ class Vacivida_Sys :
             "AccessToken":self.login_token
         }
 
-        time.sleep(5)
         #print("DEBUG - Data Cadastro = ", json.dumps(self.datacadastro, indent=4) )
         #print( json.dumps(parse_paciente_json(objpaciente),indent=4) )
         # requests.post
@@ -250,33 +251,32 @@ class Vacivida_Sys :
         return self.cadastro_message
 
     # 5. Realiza registro da imunizacao
-    def imunizar(self, objimunizacao) :
-        self.objimunizacao = objimunizacao
-         # print('LOG! = ', self.objimunizacao)
-
-        self.data_imunizar = {
-            "Data": parse_vacinacao_json(objimunizacao) ,
+    def imunizar(self, obj_db) :
+        data = {
+            "Data": parse_vacinacao_json(obj_db),
             "AccessToken":self.login_token
         }
 
-        #print( json.dumps(self.data_imunizar, indent=4))
-        response_imunizar = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-Vacinacao',
-                                          headers=self.headers, json=self.data_imunizar, timeout=500)
-        # print(response_imunizar)
-        self.response_imunizar = response_imunizar
+        try:
+            resp = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-Vacinacao',
+                                         headers=self.headers, json=data, timeout=500)
+        except Exception as e:
+            return False, e
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de imunização"
 
-        self.response_imunizar = json.loads(self.response_imunizar.text)
+        resp_text = json.loads(resp.text) 
 
-        if (self.response_imunizar['ValidationSummary'] != None) :
-            # print(self.dados_incluir['ValidationSummary']['Erros'][0]['ErrorMessage'])
-            self.imunizar_message = str(
-                self.response_imunizar['ValidationSummary']['Erros'][0]['ErrorMessage'])
-        elif ("Incluído com Sucesso" in self.response_imunizar['Message']) :
-            # print("Incluido com sucesso")
-            self.imunizar_message = str(self.response_imunizar['Message']) +" imunizado "
+        if (resp_text['ValidationSummary'] != None) :
+            message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Incluído com Sucesso" in resp_text['Message']) :
+            message = str(resp_text['Message']) + " imunizado "
+        else:
+            message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
-    def get_imunizar_message(self) :
-        return self.imunizar_message
+        #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
+        return resp_text["Data"], message
+
 
   # 6. Atualizar cadastro do paciente
     def atualizar_paciente(self, objpaciente, paciente_json=None, id_paciente=None) :    #obrigatório paciente_json OU id_paciente
@@ -403,9 +403,9 @@ class Vacivida_Sys :
             success = False
         return success, msg
 
-    def atualizar_vacinacao(self, objpaciente, id_vacinacao) :    #obrigatório paciente_json OU id_paciente
+    def atualizar_vacinacao(self, obj_db, id_vacinacao) :    #obrigatório paciente_json OU id_paciente
         data = {
-            "Data": parse_vacinacao_json(objpaciente,id_vacinacao),
+            "Data": parse_vacinacao_json(obj_db,id_vacinacao),
             "AccessToken":self.login_token
         }
 
@@ -415,7 +415,7 @@ class Vacivida_Sys :
         except Exception as e:
             return False, e
         if resp.status_code != requests.codes.ok:
-            return False, f"{resp.status_code} - Erro durante o Request de exclusão"
+            return False, f"{resp.status_code} - Erro durante o Request de atualizar vacinação"
 
         resp_text = json.loads(resp.text) 
 
@@ -423,6 +423,58 @@ class Vacivida_Sys :
             message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Alterado com Sucesso!!" in resp_text['Message']) :
             message = str(resp_text['Message']) + " imunizacao atualizada"
+        else:
+            message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
+
+        #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
+        return resp_text["Data"], message
+
+    def inserir_dose_adicional(self, obj_db) :
+        data = {
+            "Data": parse_vacinacao_json(obj_db),
+            "AccessToken":self.login_token
+        }
+
+        try:
+            resp = requests.post('https://servico.vacivida.sp.gov.br/Vacinacao/Inserir-vacinacao-adicional',
+                                         headers=self.headers, json=data, timeout=500)
+        except Exception as e:
+            return False, e
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de inclusão de dose adicional"
+
+        resp_text = json.loads(resp.text) 
+
+        if (resp_text['ValidationSummary'] != None) :
+            message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Incluído com Sucesso!" in resp_text['Message']) :
+            message = str(resp_text['Message']) + " imunizacao atualizada"
+        else:
+            message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
+
+        #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
+        return resp_text["Data"], message
+
+    def atualizar_vacinacao_adicional(self, obj_db, id_vacinacao) :    #obrigatório paciente_json OU id_paciente
+        data = {
+            "Data": parse_vacinacao_json(obj_db,id_vacinacao),
+            "AccessToken":self.login_token
+        }
+
+        try:
+            resp = requests.put('https://servico.vacivida.sp.gov.br/Vacinacao/alterar-vacinacao-adicional',
+                                         headers=self.headers, json=data, timeout=500)
+        except Exception as e:
+            return False, e
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de atualizar vacinação adicional"
+
+        resp_text = json.loads(resp.text) 
+
+        if (resp_text['ValidationSummary'] != None) :
+            message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Alterado com Sucesso!" in resp_text['Message']) :
+            message = str(resp_text['Message']) + " imunizacao adicional atualizada"
         else:
             message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
