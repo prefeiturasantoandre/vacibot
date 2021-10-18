@@ -104,238 +104,242 @@ class RegisterBatch() :
         self.list_agenda_parsed = []
         for list_agenda_line in self.list_agenda :
             parser_error = None
-            self.dict = {self.list_index[0] : str(list_agenda_line[0]),  # SEQ_AGENDA
-                         self.list_index[1] : str(list_agenda_line[1]),  # new: DSC_PUBLICO // old: 'DSC_AREA'
-                         self.list_index[2] : str(list_agenda_line[2]),  # 'DSC_NOME'
-                         self.list_index[3] : str(list_agenda_line[3]),  # 'NUM_CPF'
-                         self.list_index[4] : str(list_agenda_line[4]),  # 'DSC_NOME_MAE'
-                         self.list_index[5] : list_agenda_line[5],  # 'NUM_CNS'
-                         self.list_index[6] : list_agenda_line[6],  # 'DTA_NASCIMENTO'
-                         self.list_index[7] : str(list_agenda_line[7]),  # 'NUM_TELEFONE'
-                         self.list_index[8] : str(list_agenda_line[8]),  # 'DSC_EMAIL'
-                         self.list_index[9] : str(list_agenda_line[9]),  # 'DSC_ENDERECO'
-                         self.list_index[10] : str(list_agenda_line[10]),  # 'NUM_CEP'
-                         self.list_index[11] : str(list_agenda_line[11]),  # 'TPO_SEXO'
-                         self.list_index[12] : str(list_agenda_line[12]),  # 'DSC_RACA_COR'
-                         self.list_index[13] : str(list_agenda_line[13]),  # 'DSC_ORGAO_CLASSE'
-                         self.list_index[14] : str(list_agenda_line[14]),  # 'NUM_REGISTRO_CLASSE'
-                         self.list_index[15] : list_agenda_line[15],  # 'DTA_COMPARECIMENTO_PESSOA'
-                         self.list_index[16] : str((list_agenda_line[16])),  # 'NUM_LOTE_VACINA'
-                         self.list_index[17] : str(list_agenda_line[17]),  # 'DSC_TIPO_VACINA'
-                         self.list_index[18] : str(list_agenda_line[18]),  # 'NUM_DOSE_VACINA'
-                         self.list_index[19] : str(list_agenda_line[19]),  # 'DSC_OBSERVACAO'
-                         self.list_index[20] : str(list_agenda_line[20]),  # 'NUM_BPC'
-                         self.list_index[21] : str(list_agenda_line[21]),  # 'NUM_CRM'
-                         self.list_index[22] : str(list_agenda_line[22]),  # 'DSC_COMORBIDADES'
-                         self.list_index[23] : str(list_agenda_line[23]),  # 'IND_VACIVIDA_CADASTRO'
-                         self.list_index[24] : str(list_agenda_line[24]),  # 'IND_VACIVIDA_VACINACAO'
-                         self.list_index[25] : str(list_agenda_line[25]),  # 'DSC_AREA'
-                         self.list_index[26] : str(list_agenda_line[26])   # 'DS_GRUPO_ATENDIMENTO'
-                         }
+            try:
+                self.dict = {self.list_index[0] : str(list_agenda_line[0]),  # SEQ_AGENDA
+                            self.list_index[1] : str(list_agenda_line[1]),  # new: DSC_PUBLICO // old: 'DSC_AREA'
+                            self.list_index[2] : str(list_agenda_line[2]),  # 'DSC_NOME'
+                            self.list_index[3] : str(list_agenda_line[3]),  # 'NUM_CPF'
+                            self.list_index[4] : str(list_agenda_line[4]),  # 'DSC_NOME_MAE'
+                            self.list_index[5] : list_agenda_line[5],  # 'NUM_CNS'
+                            self.list_index[6] : list_agenda_line[6],  # 'DTA_NASCIMENTO'
+                            self.list_index[7] : str(list_agenda_line[7]),  # 'NUM_TELEFONE'
+                            self.list_index[8] : str(list_agenda_line[8]),  # 'DSC_EMAIL'
+                            self.list_index[9] : str(list_agenda_line[9]),  # 'DSC_ENDERECO'
+                            self.list_index[10] : str(list_agenda_line[10]),  # 'NUM_CEP'
+                            self.list_index[11] : str(list_agenda_line[11]),  # 'TPO_SEXO'
+                            self.list_index[12] : str(list_agenda_line[12]),  # 'DSC_RACA_COR'
+                            self.list_index[13] : str(list_agenda_line[13]),  # 'DSC_ORGAO_CLASSE'
+                            self.list_index[14] : str(list_agenda_line[14]),  # 'NUM_REGISTRO_CLASSE'
+                            self.list_index[15] : list_agenda_line[15],  # 'DTA_COMPARECIMENTO_PESSOA'
+                            self.list_index[16] : str((list_agenda_line[16])),  # 'NUM_LOTE_VACINA'
+                            self.list_index[17] : str(list_agenda_line[17]),  # 'DSC_TIPO_VACINA'
+                            self.list_index[18] : str(list_agenda_line[18]),  # 'NUM_DOSE_VACINA'
+                            self.list_index[19] : str(list_agenda_line[19]),  # 'DSC_OBSERVACAO'
+                            self.list_index[20] : str(list_agenda_line[20]),  # 'NUM_BPC'
+                            self.list_index[21] : str(list_agenda_line[21]),  # 'NUM_CRM'
+                            self.list_index[22] : str(list_agenda_line[22]),  # 'DSC_COMORBIDADES'
+                            self.list_index[23] : str(list_agenda_line[23]),  # 'IND_VACIVIDA_CADASTRO'
+                            self.list_index[24] : str(list_agenda_line[24]),  # 'IND_VACIVIDA_VACINACAO'
+                            self.list_index[25] : str(list_agenda_line[25]),  # 'DSC_AREA'
+                            self.list_index[26] : str(list_agenda_line[26])   # 'DS_GRUPO_ATENDIMENTO'
+                            }
 
-            # OTHERS KEYS:
-            # GESTANTE
-            # PUERPERA
-            # TELDDD
-            # TELNUM
+                # OTHERS KEYS:
+                # GESTANTE
+                # PUERPERA
+                # TELDDD
+                # TELNUM
 
-            # parse CPF
-            # adiciona zero a esquerda quando CPF tiver 10 digitos
-            if (len(self.dict['NUM_CPF']) == 11) :
-                # print ("DEBUG - CPF possui 11 digitos. CPF = " + self.dict['NUM_CPF'])
-                pass
-            elif (len(self.dict['NUM_CPF']) == 10) :
-                self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'0'+self.dict['NUM_CPF'][0 :]
-            elif (len(self.dict['NUM_CPF']) == 9) :
-                self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'00'+self.dict['NUM_CPF'][0 :]
-            elif (len(self.dict['NUM_CPF']) == 8) :
-                self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'000'+self.dict['NUM_CPF'][0 :]
-            elif (len(self.dict['NUM_CPF']) == 7) :
-                self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'0000'+self.dict['NUM_CPF'][0 :]
-            else :
-                print("CPF invalido! CPF = "+self.dict['NUM_CPF'])
-
-            # parse nascimento
-            self.dict['DTA_NASCIMENTO'] = self.dict['DTA_NASCIMENTO'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
-
-            # necessario fazer normalizacao dos caracteres removendo acentuacao com unidecode
-            self.dict['DSC_NOME'] = unidecode(self.dict['DSC_NOME']).upper()
-            self.dict['DSC_NOME_MAE'] = unidecode(self.dict['DSC_NOME_MAE']).upper()
-            self.dict['DSC_ENDERECO'] = unidecode(self.dict['DSC_ENDERECO']).upper()
-            self.dict['DSC_EMAIL'] = unidecode(self.dict['DSC_EMAIL']).upper()
-
-            if (self.dict['TPO_SEXO'] == "None"):
-                self.dict['TPO_SEXO'] = "I"  # usar sexo indefinido quando null no db
-            if self.dict['TPO_SEXO'] not in ["M","F","I"]:
-                print(f"Sexo inválido:{self.dict['TPO_SEXO']} ")
-
-            # Consulta raca por tags
-            if   (self.dict['DSC_RACA_COR'] in ["Amarela", "AMARELA", "amarela", "Amarelo", "AMARELO", "amarelo"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF3840AE053D065C70A17A1"
-            elif (self.dict['DSC_RACA_COR'] in ["Branca", "BRANCA", "branca", "Branco", "BRANCO", "branco"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF4840AE053D065C70A17A1"
-            elif (self.dict['DSC_RACA_COR'] in ["Indigena", "INDIGENA", "Indígena", "INDÍGENA", "indigena"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF7840AE053D065C70A17A1"
-            elif (self.dict['DSC_RACA_COR'] in ["Não informado", "Não Informada", "NÃO INFORMADA", "não informada", "nao informada"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF8840AE053D065C70A17A1"
-            elif (self.dict['DSC_RACA_COR'] in ["Preta", "Negra", "NEGRA", "negra", "Negro", "NEGRO", "negro"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF5840AE053D065C70A17A1"
-            elif (self.dict['DSC_RACA_COR'] in ["Parda", "PARDA", "parda", "Pardo", "PARDO", "pardo"] ) :
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF6840AE053D065C70A17A1"
-            else:
-                print(f"Raça/cor não identificado: {self.dict['DSC_RACA_COR']}")
-                self.dict['DSC_RACA_COR'] = "B66C4B622EF8840AE053D065C70A17A1"  #Atribui valor de 'não informado'
-
-
-            # adiciona 0 ao numero de telefone se for fixo para passar na validacao de 9 digitos
-            if (len(self.dict['NUM_TELEFONE']) == 10) :
-                self.dict['NUM_TELEFONE'] = self.dict['NUM_TELEFONE'][:2]+'0'+self.dict['NUM_TELEFONE'][2 :]
-            if (len(self.dict['NUM_TELEFONE']) > 11) :
-                self.dict['NUM_TELEFONE'] = self.dict['NUM_TELEFONE'][(len(self.dict['NUM_TELEFONE'])-11) :]
-
-            if (len(self.dict['NUM_TELEFONE']) < 8) :
-                self.dict['NUM_TELEFONE'] = "11123456789"
-
-            self.dict['NUM_TELEFONE_DDD'] = self.dict['NUM_TELEFONE'][0 :2]
-            self.dict['NUM_TELEFONE_NUM'] = self.dict['NUM_TELEFONE'][2 :len(self.dict['NUM_TELEFONE'])]
-
-            # fixed values
-            self.dict['GESTANTE'] = False
-            self.dict['PUERPERA'] = False
-            self.dict['PAIS'] = "B66C4B622E1B840AE053D065C70A17A1"
-            self.dict['UF'] = "B66C4B622DF6840AE053D065C70A17A1"
-            self.dict['MUNICIPIO'] = "B66C4B623E5E840AE053D065C70A17A1"
-            self.dict['ZONA'] = "U"
-            self.dict['NUM_ENDERECO'] = "1"  # precisa criar parser
-            self.dict['BAIRRO'] = "bairro"  # precisa criar parser
-            self.dict['COMPLEMENTO'] = "complemento"
-            self.dict['1A_DOSE_OUTRO_ESTADO'] = "null"
-            self.dict['1A_DOSE_OUTRO_PAIS'] = "null"
-
-            if (self.dict['DSC_OBSERVACAO'] != 'None'):
-                unidecode(self.dict['DSC_OBSERVACAO']).upper()
-                if ("1A DOSE EM OUTRO ESTADO" in self.dict['DSC_OBSERVACAO']):
+                # parse CPF
+                # adiciona zero a esquerda quando CPF tiver 10 digitos
+                if (len(self.dict['NUM_CPF']) == 11) :
+                    # print ("DEBUG - CPF possui 11 digitos. CPF = " + self.dict['NUM_CPF'])
                     pass
+                elif (len(self.dict['NUM_CPF']) == 10) :
+                    self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'0'+self.dict['NUM_CPF'][0 :]
+                elif (len(self.dict['NUM_CPF']) == 9) :
+                    self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'00'+self.dict['NUM_CPF'][0 :]
+                elif (len(self.dict['NUM_CPF']) == 8) :
+                    self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'000'+self.dict['NUM_CPF'][0 :]
+                elif (len(self.dict['NUM_CPF']) == 7) :
+                    self.dict['NUM_CPF'] = self.dict['NUM_CPF'][:0]+'0000'+self.dict['NUM_CPF'][0 :]
+                else :
+                    print("CPF invalido! CPF = "+self.dict['NUM_CPF'])
 
+                # parse nascimento
+                self.dict['DTA_NASCIMENTO'] = self.dict['DTA_NASCIMENTO'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
-            if (self.dict['NUM_CRM'] == 'None' or self.dict['NUM_CRM'] == '0'):
-                self.dict['NUM_CRM'] = "40787"
-            else:
-                self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
+                # necessario fazer normalizacao dos caracteres removendo acentuacao com unidecode
+                self.dict['DSC_NOME'] = unidecode(self.dict['DSC_NOME']).upper()
+                self.dict['DSC_NOME_MAE'] = unidecode(self.dict['DSC_NOME_MAE']).upper()
+                self.dict['DSC_ENDERECO'] = unidecode(self.dict['DSC_ENDERECO']).upper()
+                self.dict['DSC_EMAIL'] = unidecode(self.dict['DSC_EMAIL']).upper()
 
-            #### INFOS PARA VACINACAO
-            # fixos:
-            self.dict['ESTRATEGIA'] = "B66C4B622F6E840AE053D065C70A17A1"
-            self.dict['VIA_ADMINISTRACAO'] = "B66C4B622F6B840AE053D065C70A17A1"
-            self.dict['LOCAL_APLICACAO'] = "B66C4B622F25840AE053D065C70A17A1"
+                if (self.dict['TPO_SEXO'] == "None"):
+                    self.dict['TPO_SEXO'] = "I"  # usar sexo indefinido quando null no db
+                if self.dict['TPO_SEXO'] not in ["M","F","I"]:
+                    print(f"Sexo inválido:{self.dict['TPO_SEXO']} ")
 
-            # print(self.dict['DSC_AREA'])
-
-            #Local
-            self.dict['VACINADOR'] = di.vacinador[di.area_alias[self.dict['DSC_AREA']]]
-            self.dict['ESTABELECIMENTO'] = di.estabelecimento[di.area_alias[self.dict['DSC_AREA']]]
-
-            # verifica gestante/puerpera
-            if ("GESTANTE" in self.dict['DSC_COMORBIDADES']) :
-                self.dict['GESTANTE'] = True
-                self.dict['DSC_COMORBIDADES'] = "C1BDD007AB971C7DE053D065C70A7835"
-                self.dict['TPO_SEXO'] = "F"
-            elif ("PUÉRPERA" in self.dict['DSC_COMORBIDADES']) :
-                self.dict['PUERPERA'] = True
-                self.dict['TPO_SEXO'] = "F"
-
-
-            self.comorbset = set()
-
-            # parse grupo
-            # regras especiais
-            if ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
-                self.comorbset.add(di.comorbidade_id["SINDROME DE DOWN"])
-            elif ("HEMODIÁLISE" in self.dict['DSC_PUBLICO']) :
-                # hemodialise -> doenca renal cronica
-                self.comorbset.add(di.comorbidade_id["DOENCA RENAL CRONICA"])
-            elif ("IMUNOSSUPRESSOR" in self.dict['DSC_PUBLICO']) :
-                self.comorbset.add(di.comorbidade_id["IMUNOSSUPRIMIDO"])
-            elif ("GESTANTES, PUÉRPERAS E LACTANTES" in self.dict['DSC_PUBLICO']) :    
-                self.dict['TPO_SEXO'] = "F"
-                if( not ( ("GESTANTE" in self.dict['DSC_COMORBIDADES']) or ("PUÉRPERA" in self.dict['DSC_COMORBIDADES']) or ("LACTANTE" in self.dict['DSC_COMORBIDADES'])) ): #se não foi coletado a distinção, atribuir 'gestante'
-                    self.dict['GESTANTE'] = True
-
-            # grupo
-            if self.dict['DS_GRUPO_ATENDIMENTO'] in di.grupo_id:
-                self.dict['DSC_PUBLICO'] = di.grupo_id[self.dict['DS_GRUPO_ATENDIMENTO']]
-
-                if self.dict['DS_GRUPO_ATENDIMENTO'] == 'COMORBIDADE':
-                    for comorb in di.comorbidade_db:
-                        #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorbset
-                        if comorb in self.dict['DSC_COMORBIDADES'] :
-                            self.comorbset.add(di.comorbidade_id[ di.comorbidade_db[comorb] ])
-            else :
-                parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
-
-
-            self.dict['COMORBLIST'] = list(self.comorbset)
-
-            # parse dose
-            #verifica se é dose adicional
-            if self.dict['NUM_DOSE_VACINA'] == '3':
-                self.dict['NUM_DOSE_VACINA'] = 'Adicional'
-                self.dict["FlagDoseAdicional"] = 1
-                self.dict["IdMotivoDoseAdicional"] = "CADE90995A0CB400E053D065C70A06DC"
-                self.dict["DescricaoMotivoDoseAdicional"] = "PESSOA >= 60 ANOS"
-                if self.dict['DSC_PUBLICO'] in ( di.grupo_id['IDOSO'], di.grupo_id['IDOSO EM ILPI'] ):
-                    self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['PESSOA >= 60 ANOS']
-                elif di.comorbidade_id['IMUNOSSUPRIMIDO'] in self.dict['COMORBLIST']:
-                    self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['IMUNOSSUPRIMIDO']
+                # Consulta raca por tags
+                if   (self.dict['DSC_RACA_COR'] in ["Amarela", "AMARELA", "amarela", "Amarelo", "AMARELO", "amarelo"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF3840AE053D065C70A17A1"
+                elif (self.dict['DSC_RACA_COR'] in ["Branca", "BRANCA", "branca", "Branco", "BRANCO", "branco"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF4840AE053D065C70A17A1"
+                elif (self.dict['DSC_RACA_COR'] in ["Indigena", "INDIGENA", "Indígena", "INDÍGENA", "indigena"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF7840AE053D065C70A17A1"
+                elif (self.dict['DSC_RACA_COR'] in ["Não informado", "Não Informada", "NÃO INFORMADA", "não informada", "nao informada"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF8840AE053D065C70A17A1"
+                elif (self.dict['DSC_RACA_COR'] in ["Preta", "Negra", "NEGRA", "negra", "Negro", "NEGRO", "negro"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF5840AE053D065C70A17A1"
+                elif (self.dict['DSC_RACA_COR'] in ["Parda", "PARDA", "parda", "Pardo", "PARDO", "pardo"] ) :
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF6840AE053D065C70A17A1"
                 else:
-                    parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
-
-            self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
-            if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
-                self.dict['NUM_DOSE_VACINA'] = di.dose_id["Unica"]       #dose única
+                    print(f"Raça/cor não identificado: {self.dict['DSC_RACA_COR']}")
+                    self.dict['DSC_RACA_COR'] = "B66C4B622EF8840AE053D065C70A17A1"  #Atribui valor de 'não informado'
 
 
-            # parse tipo de vacina e lote
-            found = False
-            for key in di.vacina_id:
-                if self.dict['DSC_TIPO_VACINA'] in key or key in self.dict['DSC_TIPO_VACINA']:  #key = fabricante da vacina
-                    lote = self.dict['NUM_LOTE_VACINA']
-                    self.dict['DSC_TIPO_VACINA'] = di.vacina_id[key]
-                    self.dict['NUM_LOTE_VACINA'] = lotes[key].get(lote)
-                    found = True
+                # adiciona 0 ao numero de telefone se for fixo para passar na validacao de 9 digitos
+                if (len(self.dict['NUM_TELEFONE']) == 10) :
+                    self.dict['NUM_TELEFONE'] = self.dict['NUM_TELEFONE'][:2]+'0'+self.dict['NUM_TELEFONE'][2 :]
+                if (len(self.dict['NUM_TELEFONE']) > 11) :
+                    self.dict['NUM_TELEFONE'] = self.dict['NUM_TELEFONE'][(len(self.dict['NUM_TELEFONE'])-11) :]
 
-                    if self.dict['NUM_LOTE_VACINA'] == None:
-                        parser_error = f"Lote não identificado para {key}: {lote}"
+                if (len(self.dict['NUM_TELEFONE']) < 8) :
+                    self.dict['NUM_TELEFONE'] = "11123456789"
+
+                self.dict['NUM_TELEFONE_DDD'] = self.dict['NUM_TELEFONE'][0 :2]
+                self.dict['NUM_TELEFONE_NUM'] = self.dict['NUM_TELEFONE'][2 :len(self.dict['NUM_TELEFONE'])]
+
+                # fixed values
+                self.dict['GESTANTE'] = False
+                self.dict['PUERPERA'] = False
+                self.dict['PAIS'] = "B66C4B622E1B840AE053D065C70A17A1"
+                self.dict['UF'] = "B66C4B622DF6840AE053D065C70A17A1"
+                self.dict['MUNICIPIO'] = "B66C4B623E5E840AE053D065C70A17A1"
+                self.dict['ZONA'] = "U"
+                self.dict['NUM_ENDERECO'] = "1"  # precisa criar parser
+                self.dict['BAIRRO'] = "bairro"  # precisa criar parser
+                self.dict['COMPLEMENTO'] = "complemento"
+                self.dict['1A_DOSE_OUTRO_ESTADO'] = "null"
+                self.dict['1A_DOSE_OUTRO_PAIS'] = "null"
+
+                if (self.dict['DSC_OBSERVACAO'] != 'None'):
+                    unidecode(self.dict['DSC_OBSERVACAO']).upper()
+                    if ("1A DOSE EM OUTRO ESTADO" in self.dict['DSC_OBSERVACAO']):
+                        pass
+
+
+                if (self.dict['NUM_CRM'] == 'None' or self.dict['NUM_CRM'] == '0'):
+                    self.dict['NUM_CRM'] = "40787"
+                else:
+                    self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
+
+                #### INFOS PARA VACINACAO
+                # fixos:
+                self.dict['ESTRATEGIA'] = "B66C4B622F6E840AE053D065C70A17A1"
+                self.dict['VIA_ADMINISTRACAO'] = "B66C4B622F6B840AE053D065C70A17A1"
+                self.dict['LOCAL_APLICACAO'] = "B66C4B622F25840AE053D065C70A17A1"
+
+                # print(self.dict['DSC_AREA'])
+
+                #Local
+                self.dict['VACINADOR'] = di.vacinador[di.area_alias[self.dict['DSC_AREA']]]
+                self.dict['ESTABELECIMENTO'] = di.estabelecimento[di.area_alias[self.dict['DSC_AREA']]]
+
+                # verifica gestante/puerpera
+                if ("GESTANTE" in self.dict['DSC_COMORBIDADES']) :
+                    self.dict['GESTANTE'] = True
+                    self.dict['DSC_COMORBIDADES'] = "C1BDD007AB971C7DE053D065C70A7835"
+                    self.dict['TPO_SEXO'] = "F"
+                elif ("PUÉRPERA" in self.dict['DSC_COMORBIDADES']) :
+                    self.dict['PUERPERA'] = True
+                    self.dict['TPO_SEXO'] = "F"
+
+
+                self.comorbset = set()
+
+                # parse grupo
+                # regras especiais
+                if ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
+                    self.comorbset.add(di.comorbidade_id["SINDROME DE DOWN"])
+                elif ("HEMODIÁLISE" in self.dict['DSC_PUBLICO']) :
+                    # hemodialise -> doenca renal cronica
+                    self.comorbset.add(di.comorbidade_id["DOENCA RENAL CRONICA"])
+                elif ("IMUNOSSUPRESSOR" in self.dict['DSC_PUBLICO']) :
+                    self.comorbset.add(di.comorbidade_id["IMUNOSSUPRIMIDO"])
+                elif ("GESTANTES, PUÉRPERAS E LACTANTES" in self.dict['DSC_PUBLICO']) :    
+                    self.dict['TPO_SEXO'] = "F"
+                    if( not ( ("GESTANTE" in self.dict['DSC_COMORBIDADES']) or ("PUÉRPERA" in self.dict['DSC_COMORBIDADES']) or ("LACTANTE" in self.dict['DSC_COMORBIDADES'])) ): #se não foi coletado a distinção, atribuir 'gestante'
+                        self.dict['GESTANTE'] = True
+
+                # grupo
+                if self.dict['DS_GRUPO_ATENDIMENTO'] in di.grupo_id:
+                    self.dict['DSC_PUBLICO'] = di.grupo_id[self.dict['DS_GRUPO_ATENDIMENTO']]
+
+                    if self.dict['DS_GRUPO_ATENDIMENTO'] == 'COMORBIDADE':
+                        for comorb in di.comorbidade_db:
+                            #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorbset
+                            if comorb in self.dict['DSC_COMORBIDADES'] :
+                                self.comorbset.add(di.comorbidade_id[ di.comorbidade_db[comorb] ])
+                else :
+                    parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
+
+
+                self.dict['COMORBLIST'] = list(self.comorbset)
+
+                # parse dose
+                #verifica se é dose adicional
+                if self.dict['NUM_DOSE_VACINA'] == '3':
+                    self.dict['NUM_DOSE_VACINA'] = 'Adicional'
+                    self.dict["FlagDoseAdicional"] = 1
+                    self.dict["IdMotivoDoseAdicional"] = "CADE90995A0CB400E053D065C70A06DC"
+                    self.dict["DescricaoMotivoDoseAdicional"] = "PESSOA >= 60 ANOS"
+                    if self.dict['DSC_PUBLICO'] in ( di.grupo_id['IDOSO'], di.grupo_id['IDOSO EM ILPI'] ):
+                        self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['PESSOA >= 60 ANOS']
+                    elif di.comorbidade_id['IMUNOSSUPRIMIDO'] in self.dict['COMORBLIST']:
+                        self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['IMUNOSSUPRIMIDO']
+                    else:
+                        parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
+
+                self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
+                if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
+                    self.dict['NUM_DOSE_VACINA'] = di.dose_id["Unica"]       #dose única
+
+
+                # parse tipo de vacina e lote
+                found = False
+                for key in di.vacina_id:
+                    if self.dict['DSC_TIPO_VACINA'] in key or key in self.dict['DSC_TIPO_VACINA']:  #key = fabricante da vacina
+                        lote = self.dict['NUM_LOTE_VACINA']
+                        self.dict['DSC_TIPO_VACINA'] = di.vacina_id[key]
+                        self.dict['NUM_LOTE_VACINA'] = lotes[key].get(lote)
+                        found = True
+
+                        if self.dict['NUM_LOTE_VACINA'] == None:
+                            parser_error = f"Lote não identificado para {key}: {lote}"
+                            
+                            #salva lotes c/ erro p/ consulta
+                            with open("logs/lotes_erro.csv", "a") as fp:
+                                fp.write(f"{key},{lote},{datetime.now()}\n")
                         
-                        #salva lotes c/ erro p/ consulta
-                        with open("logs/lotes_erro.csv", "a") as fp:
-                            fp.write(f"{key},{lote},{datetime.now()}\n")
-                    
-                    break
-            if not found:    
-                parser_error = "Vacina não identificada: ", self.dict['DSC_TIPO_VACINA']
-            del found
+                        break
+                if not found:    
+                    parser_error = "Vacina não identificada: ", self.dict['DSC_TIPO_VACINA']
+                del found
 
 
-            # calcula aprazamento e parser datas
-            aprazamento = None
-            if self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Coronavac"]:
-                aprazamento = 28
-            elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["AstraZeneca"]:
-                aprazamento = 84
-            elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
-                aprazamento = 56
-            
-            if aprazamento:
-                self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
-            else:
-                # janssen
-                self.dict['DTA_APRAZAMENTO'] = None
+                # calcula aprazamento e parser datas
+                aprazamento = None
+                if self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Coronavac"]:
+                    aprazamento = 28
+                elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["AstraZeneca"]:
+                    aprazamento = 84
+                elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
+                    aprazamento = 56
+                
+                if aprazamento:
+                    self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
+                else:
+                    # janssen
+                    self.dict['DTA_APRAZAMENTO'] = None
 
-            # print (self.dict['DTA_COMPARECIMENTO_PESSOA'])
-            self.dict['DTA_COMPARECIMENTO_PESSOA'] = self.dict['DTA_COMPARECIMENTO_PESSOA'].strftime(
-                "%Y-%m-%dT%H:%M:%S.000Z")
-            self.dict['DTA_COMPARECIMENTO_PESSOA'] = str(self.dict['DTA_COMPARECIMENTO_PESSOA'])
+                # print (self.dict['DTA_COMPARECIMENTO_PESSOA'])
+                self.dict['DTA_COMPARECIMENTO_PESSOA'] = self.dict['DTA_COMPARECIMENTO_PESSOA'].strftime(
+                    "%Y-%m-%dT%H:%M:%S.000Z")
+                self.dict['DTA_COMPARECIMENTO_PESSOA'] = str(self.dict['DTA_COMPARECIMENTO_PESSOA'])
+
+            except Exception as e:
+                parser_error = e
 
             # salva agenda parseada se o parser não apresentou erro
             if parser_error:
