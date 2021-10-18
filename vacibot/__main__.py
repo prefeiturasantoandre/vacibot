@@ -288,6 +288,8 @@ class RegisterBatch() :
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['PESSOA >= 60 ANOS']
                     elif di.comorbidade_id['IMUNOSSUPRIMIDO'] in self.dict['COMORBLIST']:
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['IMUNOSSUPRIMIDO']
+                    elif self.dict['DSC_PUBLICO'] == di.grupo_id['TRABALHADOR DE SAUDE']:
+                        self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['TRABALHADOR DA SAÚDE']
                     else:
                         parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
 
