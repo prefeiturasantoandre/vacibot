@@ -1,4 +1,5 @@
 import time, logging, ray, asyncio
+from threading import Semaphore
 from vacivida import Vacivida_Sys
 from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT, MAX_WORKERS
 import dicts as di
@@ -474,14 +475,17 @@ class Manager:
         self.max_workers = max_workers
         self.used_workers = 0
         self.supervisors = {}
+        self.semaphore = Semaphore(1)
 
     def create_supervisor(self, area, records, login):
         h = ray.remote(Supervisor).options(name=f"{area}.supervisor").remote(area, records, login)
+        self.semaphore.acquire()
         self.supervisors[area] = {
             "handler":h,
             "n_workers":0,
             "list_size":len(records)
         }
+        self.semaphore.release()
         return True
 
     async def run(self):
@@ -491,24 +495,20 @@ class Manager:
             return False
 
         # inicializa cada supervisor
+        self.semaphore.acquire()
         for area in self.supervisors:
             s = self.supervisors[area]
-            while True:
-                if self.used_workers <= self.max_workers:
-                    self.used_workers += 1
-                    s["n_workers"] = 1
-                    s["handler"].run.remote(1)
-                    break
-                else:
-                    await asyncio.sleep(DISPATCHER_WAIT)
-                    #time.sleep(DISPATCHER_WAIT)        
-        self._print("Todos os supervisores foram iniciados com 1 worker")
+            s["n_workers"] = 0
+            s["handler"].run.remote(0)   
+        self._print("Todos os supervisores foram iniciados sem workers")
+        self.semaphore.release()
 
         # enquanto houverem supervisores ativos, verifica se
         # existem workers disponíveis e os distribui p/ cada supervisor
         while self.supervisors:
-            if self.used_workers <= self.max_workers:
+            if self.used_workers < self.max_workers:
                 # encontra o supervisor com menor n_workers
+                self.semaphore.acquire()
                 min = self.max_workers
                 for area in self.supervisors:
                     if self.supervisors[area]["n_workers"] < min:
@@ -522,6 +522,7 @@ class Manager:
                 s["n_workers"] += 1
                 s["handler"].add_n_workers.remote(1)
                 self._print(f"novo worker atribuido ao {a}")
+                self.semaphore.release()
 
             else:
                 await asyncio.sleep(DISPATCHER_WAIT)
@@ -534,6 +535,7 @@ class Manager:
         # encontra o handler do supervisor
         supervisor = ray.get_actor(f"{area}.supervisor")   
 
+        self.semaphore.acquire()
         # termina o supervisor
         ray.kill(supervisor)
         # encontra o handler local
@@ -545,6 +547,7 @@ class Manager:
                 self._print(f"Supervisor de {area} devolveu {n} workers")
                 self.supervisors.pop(area)
                 break
+        self.semaphore.release()
 
     def _print(self, str):
         print(f"[{'manager':^26}] {str}")
