@@ -1,5 +1,6 @@
 import time, logging, ray, asyncio
 from threading import Semaphore
+from datetime import date, timedelta
 from vacivida import Vacivida_Sys
 from settings import db, MAX_RETRY, WORKING_QUEUE, DISPATCHER_WAIT, MAX_WORKERS
 import dicts as di
@@ -413,7 +414,33 @@ class Supervisor():
         if n_workers:
             self.n_workers = n_workers
         Filler_remote = ray.remote(Filler)
-
+        
+        # verifica se é possível realizar algum cadastro
+        self._print("Verificando bloqueio do Vacivida")
+        vacivida = Vacivida_Sys()
+        error_msg = ""
+        if (auth:=vacivida.autenticar(self.login)) != "Autenticado!": # realiza login
+            error_msg = auth
+        else:
+            # verifica se existe relatório de perda no dia anterior
+            if not vacivida.get_perda_anterior(di.estabelecimento[self.area]):
+                # se não existe, insere o relatório de perdas do dia anterior
+                ins, msg = vacivida.inserir_perda((date.today()-timedelta(1)).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                                                  di.estabelecimento[self.area],
+                                                  "7694aac0-dedc-4d79-8639-61962efdad08",
+                                                  "9d217aaf-569f-4a7e-8797-202efacf77cf")
+                if ins:
+                    self._print(msg)
+                else:
+                    error_msg = "Não foi possível inserir relatório de perdas para o dia anterior: " + msg
+        del vacivida
+        if error_msg:
+            self.notify_manager(error_msg)
+            return
+        del error_msg
+        
+        # inicializa o dispatcher
+        self._print("Despachando Fillers")
         while (self.queue):
             # enquanto houver cadastros na fila
             # dispacha um Filler por vez e espera DISPATCHER_WAIT segundos
@@ -436,7 +463,12 @@ class Supervisor():
         while (self.fillers):
             await asyncio.sleep(5)
         
-        self._print("Finalizada execução")
+        self.notify_manager("Finalizada execução")
+        
+    def notify_manager(self, msg=""):
+        if not msg:
+            msg = "Notificando Manager"
+        self._print(msg)
         # notifica Manager
         manager = ray.get_actor("manager")
         manager.notify.remote(self.area)

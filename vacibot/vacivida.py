@@ -480,3 +480,67 @@ class Vacivida_Sys :
 
         #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
         return resp_text["Data"], message
+
+    def get_perda_anterior(self, estabelecimento_id):
+        data = {
+            "IdEstabelecimentos": [ estabelecimento_id ],
+            "AccessToken":self.login_token
+        }
+        try:
+            resp = requests.post('https://servico.vacivida.sp.gov.br/RegistroDose/filtrar-perda-doses-dia-anterior',
+                                 headers=self.headers, data=data, timeout=500)
+        except Exception as e:
+            return None
+        if resp.status_code != requests.codes.ok:
+            return None
+
+        resp_text = json.loads(resp.text) 
+        print(json.dumps(resp_text, indent=4))
+        return resp_text["Data"]        # retorna None se vazio
+    
+
+    def inserir_perda(self, date, estabelecimento_id, imunobiologico_id, lote_id, **kwargs) :
+        data = {
+            "Data": {            
+                "DataRegistroDose": date,
+                "FalhaEquip": kwargs.get("FalhaEquip") or 0,
+                "FalhaTransporte": kwargs.get("FalhaTransporte") or 0,
+                "FaltaEnergia": kwargs.get("FaltaEnergia") or 0,
+                "FrascosTransferidos": kwargs.get("FrascosTransferidos") or 0,
+                "FrascosUtilizados": kwargs.get("FrascosUtilizados") or 0,
+                "IdEstabelecimento": estabelecimento_id,
+                "IdImunobiologico": imunobiologico_id,
+                "IdLote": lote_id,
+                "Indisponivel": kwargs.get("Indisponivel") or 0,
+                "Justificativa": kwargs.get("Justificativa") or "",
+                "OutrosMotivos": kwargs.get("OutrosMotivos") or 0,
+                "ProcedimentoInadequado": kwargs.get("ProcedimentoInadequado") or 0,
+                "QtDosesQuebraFrasco": kwargs.get("QtDosesQuebraFrasco") or 0,
+                "QuebraFrasco": kwargs.get("QuebraFrasco") or 0,
+                "ValidadeVencida": kwargs.get("ValidadeVencida") or 0
+            },
+            "AccessToken":self.login_token
+        }
+
+        try:
+            resp = requests.post('https://servico.vacivida.sp.gov.br/RegistroDose/incluir-perda-dose',
+                                 headers=self.headers, json=data, timeout=500)
+        except Exception as e:
+            return False, e
+        if resp.status_code != requests.codes.ok:
+            return False, f"{resp.status_code} - Erro durante o Request de inclusão de dose adicional"
+
+        resp_text = json.loads(resp.text) 
+        print(json.dumps(resp_text, indent=4))
+
+        if (resp_text['ValidationSummary'] != None) :
+            success = False
+            message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
+        elif ("Perda da dose incluída com sucesso!" in resp_text['Message']) :
+            success = True
+            message = str(resp_text['Message'])
+        else:
+            success = False
+            message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
+            
+        return success, message
