@@ -494,8 +494,8 @@ class Vacivida_Sys :
         if resp.status_code != requests.codes.ok:
             return None
 
-        resp_text = json.loads(resp.text) 
-        print(json.dumps(resp_text, indent=4))
+        resp_text = json.loads(resp.text)
+        
         return resp_text["Data"]        # retorna None se vazio
     
 
@@ -530,8 +530,7 @@ class Vacivida_Sys :
         if resp.status_code != requests.codes.ok:
             return False, f"{resp.status_code} - Erro durante o Request de inclusão de dose adicional"
 
-        resp_text = json.loads(resp.text) 
-        print(json.dumps(resp_text, indent=4))
+        resp_text = json.loads(resp.text)
 
         if (resp_text['ValidationSummary'] != None) :
             success = False
