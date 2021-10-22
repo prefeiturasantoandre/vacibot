@@ -58,16 +58,15 @@ def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
         "IdUFPrimeiraDose":None,
         "PrimeiraDoseOutroEstado":None,
         "PrimeiraDoseOutroPais":None,
+        "FlagInvalido": 0,
+        "IdComorbidade"         : objimunizacao["COMORBLIST"],
+        "CRMComorbidade"        : objimunizacao["NUM_CRM"] or "",
+        "DescricaoBPC"          : None,
+        "VacinacaoComorbidade"  : [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ],
     }
-    if (objimunizacao['DSC_PUBLICO'] == grupo_id["COMORBIDADE"]) :
-        vacinacao_json["IdComorbidade"]          = objimunizacao["COMORBLIST"]
-        vacinacao_json["CRMComorbidade"]         = objimunizacao["NUM_CRM"]
-        vacinacao_json["DescricaoBPC"]           = None
-        vacinacao_json["VacinacaoComorbidade"]   = [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ]
 
     if id_vacinacao:
         vacinacao_json["IdVacinacao"]   = id_vacinacao
-        vacinacao_json["FlagInvalido"]  = 0
 
     return vacinacao_json
 # Funcoes referentes ao Vacivida
@@ -137,7 +136,6 @@ class Vacivida_Sys :
         
         return self.get_auth_message()
         
-
     def get_auth_message(self) :
         return self.auth_message
 
@@ -276,7 +274,6 @@ class Vacivida_Sys :
 
         #retorna vacinacao_json da response // vacinacao_json será null se ocorrer erro na atualização
         return resp_text["Data"], message
-
 
   # 6. Atualizar cadastro do paciente
     def atualizar_paciente(self, objpaciente, paciente_json=None, id_paciente=None) :    #obrigatório paciente_json OU id_paciente
@@ -498,7 +495,6 @@ class Vacivida_Sys :
         
         return resp_text["Data"]        # retorna None se vazio
     
-
     def inserir_perda(self, date, estabelecimento_id, imunobiologico_id, lote_id, **kwargs) :
         data = {
             "Data": {            

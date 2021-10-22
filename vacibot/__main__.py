@@ -126,7 +126,7 @@ class RegisterBatch() :
                             self.list_index[18] : str(list_agenda_line[18]),  # 'NUM_DOSE_VACINA'
                             self.list_index[19] : str(list_agenda_line[19]),  # 'DSC_OBSERVACAO'
                             self.list_index[20] : str(list_agenda_line[20]),  # 'NUM_BPC'
-                            self.list_index[21] : str(list_agenda_line[21]),  # 'NUM_CRM'
+                            self.list_index[21] : list_agenda_line[21],  # 'NUM_CRM'
                             self.list_index[22] : str(list_agenda_line[22]),  # 'DSC_COMORBIDADES'
                             self.list_index[23] : str(list_agenda_line[23]),  # 'IND_VACIVIDA_CADASTRO'
                             self.list_index[24] : str(list_agenda_line[24]),  # 'IND_VACIVIDA_VACINACAO'
@@ -219,11 +219,6 @@ class RegisterBatch() :
                         pass
 
 
-                if (self.dict['NUM_CRM'] == 'None' or self.dict['NUM_CRM'] == '0'):
-                    self.dict['NUM_CRM'] = "40787"
-                else:
-                    self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
-
                 #### INFOS PARA VACINACAO
                 # fixos:
                 self.dict['ESTRATEGIA'] = "B66C4B622F6E840AE053D065C70A17A1"
@@ -271,6 +266,12 @@ class RegisterBatch() :
                             #para cada comorbidade no banco de dados, adiciona id do vacivida ao self.comorbset
                             if comorb in self.dict['DSC_COMORBIDADES'] :
                                 self.comorbset.add(di.comorbidade_id[ di.comorbidade_db[comorb] ])
+                        # verifica o CRM p/ um válido
+                        if ( (not self.dict['NUM_CRM']) or self.dict['NUM_CRM'] == '0' ):
+                            self.dict['NUM_CRM'] = "40787"
+                        else:
+                            self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
+
                 else :
                     parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
 
@@ -333,7 +334,7 @@ class RegisterBatch() :
                     self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
                 else:
                     # janssen
-                    self.dict['DTA_APRAZAMENTO'] = None
+                    self.dict['DTA_APRAZAMENTO'] = self.dict['DTA_COMPARECIMENTO_PESSOA'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
                 # print (self.dict['DTA_COMPARECIMENTO_PESSOA'])
                 self.dict['DTA_COMPARECIMENTO_PESSOA'] = self.dict['DTA_COMPARECIMENTO_PESSOA'].strftime(
