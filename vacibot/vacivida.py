@@ -488,7 +488,7 @@ class Vacivida_Sys :
         }
         try:
             resp = requests.post('https://servico.vacivida.sp.gov.br/RegistroDose/filtrar-perda-doses-dia-anterior',
-                                 headers=self.headers, data=data, timeout=500)
+                                 headers=self.headers, json=data, timeout=500)
         except Exception as e:
             return None
         if resp.status_code != requests.codes.ok:
