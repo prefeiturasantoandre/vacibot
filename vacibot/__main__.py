@@ -272,6 +272,8 @@ class RegisterBatch() :
                         else:
                             self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
 
+                elif self.dict['NUM_DOSE_VACINA'] == '3':
+                    pass    #grupo será replicado pelo estado 8 do Filler
                 else :
                     parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
 
@@ -283,14 +285,14 @@ class RegisterBatch() :
                 if self.dict['NUM_DOSE_VACINA'] == '3':
                     self.dict['NUM_DOSE_VACINA'] = 'Adicional'
                     self.dict["FlagDoseAdicional"] = 1
-                    self.dict["IdMotivoDoseAdicional"] = "CADE90995A0CB400E053D065C70A06DC"
-                    self.dict["DescricaoMotivoDoseAdicional"] = "PESSOA >= 60 ANOS"
                     if self.dict['DSC_PUBLICO'] in ( di.grupo_id['IDOSO'], di.grupo_id['IDOSO EM ILPI'] ):
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['PESSOA >= 60 ANOS']
                     elif di.comorbidade_id['IMUNOSSUPRIMIDO'] in self.dict['COMORBLIST']:
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['IMUNOSSUPRIMIDO']
                     elif self.dict['DSC_PUBLICO'] == di.grupo_id['TRABALHADOR DE SAUDE']:
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['TRABALHADOR DA SAÚDE']
+                    elif self.dict["DSC_PUBLICO"] == "PESSOAS COM VIAGEM MARCADA PARA O EXTERIOR":
+                        self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['VIAGEM AO EXTERIOR']
                     else:
                         parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
 
