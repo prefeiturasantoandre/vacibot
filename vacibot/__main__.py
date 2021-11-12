@@ -326,11 +326,11 @@ class RegisterBatch() :
                 # calcula aprazamento e parser datas
                 aprazamento = None
                 if self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Coronavac"]:
-                    aprazamento = 28
+                    aprazamento = 14
                 elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["AstraZeneca"]:
-                    aprazamento = 84
-                elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
                     aprazamento = 56
+                elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
+                    aprazamento = 21
                 
                 if aprazamento:
                     self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
