@@ -157,7 +157,8 @@ class RegisterBatch() :
                     print("CPF invalido! CPF = "+self.dict['NUM_CPF'])
 
                 # parse nascimento
-                self.dict['DTA_NASCIMENTO'] = self.dict['DTA_NASCIMENTO'].strftime("%Y-%m-%dT%H:%M:%S.000Z")
+                dta_nascimento = self.dict['DTA_NASCIMENTO']
+                self.dict['DTA_NASCIMENTO'] = dta_nascimento.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
                 # necessario fazer normalizacao dos caracteres removendo acentuacao com unidecode
                 self.dict['DSC_NOME'] = unidecode(self.dict['DSC_NOME']).upper()
@@ -326,11 +327,14 @@ class RegisterBatch() :
                 # calcula aprazamento e parser datas
                 aprazamento = None
                 if self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Coronavac"]:
-                    aprazamento = 14
+                    aprazamento = 28
                 elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["AstraZeneca"]:
                     aprazamento = 56
                 elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer"]:
-                    aprazamento = 21
+                    if (datetime.today().year - dta_nascimento.year) < 18:
+                        aprazamento = 56
+                    else:
+                        aprazamento = 21
                 
                 if aprazamento:
                     self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
@@ -348,7 +352,7 @@ class RegisterBatch() :
 
             # salva agenda parseada se o parser não apresentou erro
             if parser_error:
-                print(f"{parser_error} | Cadastro SEQ_AGENDA={self.dict['SEQ_AGENDA']} desconsiderado")
+                print(f"Exception: {parser_error} | Cadastro SEQ_AGENDA={self.dict['SEQ_AGENDA']} desconsiderado")
             else:
                 self.list_agenda_parsed.append(self.dict)
 
