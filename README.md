@@ -70,6 +70,7 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
    obs.: Será necessário ativá-lo sempre que for utilizar o bot
 
    ```
+   sudo apt install python3-venv
    python3 -m venv venv
    . venv/bin/activate
    ```
@@ -91,8 +92,8 @@ Sinta-se a vontade para me contatar se precisar de qualquer auxílio.
    ```
    wget https://download.oracle.com/otn_software/linux/instantclient/oracle-instantclient-basic-linuxx64.rpm
    sudo apt-get install alien libaio1
-   sudo alien oracle-instantclientX.X-basic-x.x.x.x.x-1.amd64.rpm
-   sudo dpkg -i oracle-instantclient-basic_x.x.x.x.x-2_amd64.deb
+   sudo alien oracle-instantclient-basic*.rpm
+   sudo dpkg -i oracle-instantclient-basic*.deb
    ```
 
 6. Crie uma cópia de `credentials.example.py` com o nome `credentials.py`. Em seguida, altere as credenciais de acesso contidas no arquivo `credentials.py` seguindo o padrão do arquivo
