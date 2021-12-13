@@ -294,8 +294,10 @@ class RegisterBatch() :
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['TRABALHADOR DA SAÚDE']
                     elif self.dict["DSC_PUBLICO"] == "PESSOAS COM VIAGEM MARCADA PARA O EXTERIOR":
                         self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['VIAGEM AO EXTERIOR']
+                    elif self.dict["DSC_PUBLICO"] in (di.grupo_id["POPULACAO EM GERAL"], di.grupo_id["TRABALHADOR DA EDUCACAO"]):
+                        self.dict["IdMotivoDoseAdicional"] = di.dose_adicional['POPULACAO GERAL']
                     else:
-                        parser_error = f"Motivo de dose adicional não identificado | SEQ_AGENDA={self.dict['SEQ_AGENDA']}"            
+                        parser_error = f"Motivo de dose adicional não identificado | DSC_PUBLICO={self.dict['DSC_PUBLICO'] }"          
 
                 self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
                 if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
