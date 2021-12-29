@@ -498,43 +498,54 @@ def update_lotes_db(local_lotes):
 
 # Loop para reiniciar os registros a cada time.sleep(x) tempo
 # Dica: em momentos de instabilidade, pode ser interessante reduzir o tempo para apenas alguns minutos
-while True :
-    while True:
-        print("Atualizando listas de lotes")
+while __name__ == "__main__":
+    try:
+        while True:
+            print("Atualizando listas de lotes")
+            try:
+                lotes = fetch_lotes( list(login_vacivida.values())[0] )     #utiliza o login da primeira unidade
+                print("Lista de lotes atualizada")
+                break
+            except Exception as e:
+                print("Não foi possível atualizar lista de lotes.")
+            time.sleep(30)
+
+        print ("Inicializando processos...")
         try:
-            lotes = fetch_lotes( list(login_vacivida.values())[0] )     #utiliza o login da primeira unidade
-            print("Lista de lotes atualizada")
-            break
+            list_to_send, list_seq_agenda = GetDB()
         except Exception as e:
-            print("Não foi possível atualizar lista de lotes.")
-        time.sleep(30)
+            print("Não foi possível obter registros do banco de dados: ", e)
+            time.sleep(300)
+            continue
+            
+        records_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
+        manager = Manager_remote.options(name='manager').remote(max_workers)
 
-    print ("Inicializando processos...")
-    list_to_send, list_seq_agenda = GetDB()
-    records_parsed = CreateRegistersToSend_unsplitted(list_seq_agenda)
-    manager = Manager_remote.options(name='manager').remote(max_workers)
+        # separa os registros por area
+        area_records = {}
+        for record in records_parsed:
+            try:
+                area_records[ di.area_alias[record["DSC_AREA"]] ].append(record)
+            except:
+                area_records[ di.area_alias[record["DSC_AREA"]] ] = [ record ]    
 
-    # separa os registros por area
-    area_records = {}
-    for record in records_parsed:
-        try:
-            area_records[ di.area_alias[record["DSC_AREA"]] ].append(record)
-        except:
-            area_records[ di.area_alias[record["DSC_AREA"]] ] = [ record ]    
+        # inicializa os supervisores
+        created = []
+        print("Quantidade por Local:")
+        for area in area_records:
+            if di.vacinador[area] != "" and di.estabelecimento[area] != "":
+                created.append( manager.create_supervisor.remote(area, area_records[area], login_vacivida[area]) )
+                print (f"{len(area_records[area]):^5} - {area}")
+        
+        # aguarda a confirmação de criação dos supervisores e executa
+        ray.get(created)
+        manager.run.remote()
+        #manager.run()
 
-    # inicializa os supervisores
-    created = []
-    print("Quantidade por Local:")
-    for area in area_records:
-        if di.vacinador[area] != "" and di.estabelecimento[area] != "":
-            created.append( manager.create_supervisor.remote(area, area_records[area], login_vacivida[area]) )
-            print (f"{len(area_records[area]):^5} - {area}")
-    
-    # aguarda a confirmação de criação dos supervisores e executa
-    ray.get(created)
-    manager.run.remote()
-    #manager.run()
-
-    #termina os actors e reinicia o processamento
-    time.sleep(3600)  # reinicia processos a cada X segundos
-    ray.kill(manager)
+        #termina os actors e reinicia o processamento
+        time.sleep(3600)  # reinicia processos a cada X segundos
+        ray.kill(manager)
+        
+    except Exception as e:
+        print("Erro durante a inicialização: ", e)
+        time.sleep(3600)
