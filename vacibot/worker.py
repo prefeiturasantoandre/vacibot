@@ -230,6 +230,7 @@ class Filler():
                         self.working_entry["NUM_CRM"]       = vacinacao["CRMComorbidade"]
                         self.working_entry["DSC_PUBLICO"]   = vacinacao['IdGrupoAtendimento']
                         self.working_entry["ESTRATEGIA"]    = vacinacao['IdEstrategia']
+                        self.working_entry["VacinacaoComorbidade"] = vacinacao["VacinacaoComorbidade"]
 
             # verifica se a dose já foi inserida no Vacivida
             on_vacivida = 0

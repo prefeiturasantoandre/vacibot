@@ -62,7 +62,7 @@ def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
         "IdComorbidade"         : objimunizacao["COMORBLIST"],
         "CRMComorbidade"        : objimunizacao["NUM_CRM"] or "",
         "DescricaoBPC"          : None,
-        "VacinacaoComorbidade"  : [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ],
+        "VacinacaoComorbidade"  : objimunizacao.get("VacinacaoComorbidade") or [ {"IdComorbidade":comorb} for comorb in objimunizacao["COMORBLIST"] ],
     }
 
     if id_vacinacao:
@@ -445,7 +445,7 @@ class Vacivida_Sys :
         if (resp_text['ValidationSummary'] != None) :
             message = str(resp_text['ValidationSummary']['Erros'][0]['ErrorMessage'])
         elif ("Incluído com Sucesso!" in resp_text['Message']) :
-            message = str(resp_text['Message']) + " imunizacao atualizada"
+            message = str(resp_text['Message']) + " imunizacao incluida"
         else:
             message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
 
@@ -524,7 +524,7 @@ class Vacivida_Sys :
         except Exception as e:
             return False, e
         if resp.status_code != requests.codes.ok:
-            return False, f"{resp.status_code} - Erro durante o Request de inclusão de dose adicional"
+            return False, f"{resp.status_code} - Erro durante o Request de inclusão de perda de dose"
 
         resp_text = json.loads(resp.text)
 
