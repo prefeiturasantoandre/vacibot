@@ -5,6 +5,7 @@ vacina_id = {
 	"AstraZeneca":"B9BAB192F78A60DBE053D065C70A09F3",
 	"Pfizer":"7694aac0-dedc-4d79-8639-61962efdad08",
 	"Janssen":"f26f7def-27c5-4ab3-9dda-fd13add16025",
+    "Pfizer Pediatrico":"D344B3FFC5B25226E0530300980A251F",
 }
 
 grupo_id = {

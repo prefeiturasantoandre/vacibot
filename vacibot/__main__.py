@@ -337,6 +337,8 @@ class RegisterBatch() :
                         aprazamento = 56
                     else:
                         aprazamento = 21
+                elif self.dict["DSC_TIPO_VACINA"] == di.vacina_id["Pfizer Pediatrico"]:
+                    aprazamento = 56
                 
                 if aprazamento:
                     self.dict['DTA_APRAZAMENTO'] = (self.dict['DTA_COMPARECIMENTO_PESSOA']+timedelta(days=aprazamento)).strftime("%Y-%m-%dT%H:%M:%S")+".000Z"
