@@ -307,7 +307,7 @@ class RegisterBatch() :
                         parser_error = f"Motivo de dose adicional não identificado | DSC_PUBLICO={self.dict['DSC_PUBLICO'] }"          
 
                 self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
-                if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']):
+                if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']) and self.dict['NUM_DOSE_VACINA'] != di.dose_id['Adicional']:
                     self.dict['NUM_DOSE_VACINA'] = di.dose_id["Unica"]       #dose única
 
 
