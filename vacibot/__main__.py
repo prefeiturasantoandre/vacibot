@@ -272,6 +272,13 @@ class RegisterBatch() :
                             self.dict['NUM_CRM'] = "40787"
                         else:
                             self.dict['NUM_CRM'] = re.sub(r'\D','', self.dict['NUM_CRM'] )   #Formata p/ somente numeros
+                    
+                    # QUANDO EXISTIR A INFORMAÇÃO NA LISTA DE "COMORBIDADES" OS VALORES INDIGENA e QUILOMBOLA
+                    # SETA O ID GRUPO ACORDO COM O VALOR ENCONTRADO
+                    elif "Indígena" in self.dict['DSC_COMORBIDADES'] :
+                        self.dict['DSC_PUBLICO'] = di.grupo_id['INDIGENAS']
+                    elif "Quilombola" in self.dict['DSC_COMORBIDADES'] :
+                        self.dict['DSC_PUBLICO'] = di.grupo_id['QUILOMBOLA']   
 
                 elif self.dict['NUM_DOSE_VACINA'] == '3':
                     pass    #grupo será replicado pelo estado 8 do Filler
