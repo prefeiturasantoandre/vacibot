@@ -306,21 +306,22 @@ class RegisterBatch() :
 
                 # parse tipo de vacina e lote
                 found = False
-                for key in di.vacina_id:
-                    if self.dict['DSC_TIPO_VACINA'] in key or key in self.dict['DSC_TIPO_VACINA']:  #key = fabricante da vacina
-                        lote = self.dict['NUM_LOTE_VACINA']
-                        self.dict['DSC_TIPO_VACINA'] = di.vacina_id[key]
-                        self.dict['NUM_LOTE_VACINA'] = lotes[key].get(lote)
-                        found = True
+                if self.dict['DSC_TIPO_VACINA'] == 'AstraZeneca/Fiocruz':   #trata vacina com nome diferente no db
+                    self.dict['DSC_TIPO_VACINA'] = 'AstraZeneca'
+                if self.dict['DSC_TIPO_VACINA'] in di.vacina_id :  #key = fabricante da vacina
+                    key = self.dict['DSC_TIPO_VACINA']
+                    lote = self.dict['NUM_LOTE_VACINA']
+                    self.dict['DSC_TIPO_VACINA'] = di.vacina_id[key]
+                    self.dict['NUM_LOTE_VACINA'] = lotes[key].get(lote)
+                    found = True
 
-                        if self.dict['NUM_LOTE_VACINA'] == None:
-                            parser_error = f"Lote não identificado para {key}: {lote}"
-                            
-                            #salva lotes c/ erro p/ consulta
-                            with open("logs/lotes_erro.csv", "a") as fp:
-                                fp.write(f"{key},{lote},{datetime.now()}\n")
+                    if self.dict['NUM_LOTE_VACINA'] == None:
+                        parser_error = f"Lote não identificado para {key}: {lote}"
                         
-                        break
+                        #salva lotes c/ erro p/ consulta
+                        with open("logs/lotes_erro.csv", "a") as fp:
+                            fp.write(f"{key},{lote},{datetime.now()}\n")                        
+                
                 if not found:    
                     parser_error = "Vacina não identificada: ", self.dict['DSC_TIPO_VACINA']
                 del found
