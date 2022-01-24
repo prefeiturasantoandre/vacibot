@@ -539,3 +539,17 @@ class Vacivida_Sys :
             message = f"Resposta da atualização: \n{json.dumps(resp_text, indent=4)}"
             
         return success, message
+
+    def get_vacinadores(self, estabelecimento_id):
+        data = {
+            'AccessToken':self.login_token,
+            'CampoOrdenacao':"CNS",
+            'DirecaoOrdenacao':"desc",
+            'IdEstabelecimento': estabelecimento_id,
+            'Pagina':1,
+            'TamanhoPagina':500,
+        }
+        resp = requests.post('https://servico.vacivida.sp.gov.br/Cadastro/Vacinador/estabelecimento', 
+                            headers=self.headers, json=data, timeout=500)
+        resp_text = json.loads(resp.text) 
+        return resp_text["Data"]
