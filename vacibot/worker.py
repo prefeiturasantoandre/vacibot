@@ -156,6 +156,9 @@ class Filler():
                 
                 #avança p/ próximo estado
                 self.state = 8       
+            elif ("CPF do paciente já cadastrado" in cadastrar_status) :
+                # por um erro do Vacivida, às vezes ele retorna que o usuário não está cadstrado no Estado 2, mas sim no estado 3
+                self.state = 5
             elif self.remaining_retry > 0:
                 #se mantém no mesmo estado até alcançar MAX_RETRY
                 #self._print("Tentativas restantes: ", self.remaining_retry)
