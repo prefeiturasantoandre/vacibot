@@ -46,6 +46,8 @@ except:
 table_index = []            #Nomes das colunas da select_query
 global lotes
 lotes = {}
+global dados_base
+dados_base = {}
 
 
 # Precisa adicionar na funcao parse_to_dict() as keys caso sejam adicionadas novas
@@ -131,8 +133,11 @@ class RegisterBatch() :
                             self.list_index[23] : str(list_agenda_line[23]),  # 'IND_VACIVIDA_CADASTRO'
                             self.list_index[24] : str(list_agenda_line[24]),  # 'IND_VACIVIDA_VACINACAO'
                             self.list_index[25] : str(list_agenda_line[25]),  # 'DSC_AREA'
-                            self.list_index[26] : str(list_agenda_line[26])   # 'DS_GRUPO_ATENDIMENTO'
-                            }
+                            self.list_index[26] : str(list_agenda_line[26]),  # 'DS_GRUPO_ATENDIMENTO'
+                            self.list_index[27] : (list_agenda_line[27]),  # 'DSC_OUTRA_CIDADE'
+                            self.list_index[28] : (list_agenda_line[28]),  # 'DSC_OUTRO_ESTADO'
+                            self.list_index[29] : (list_agenda_line[29]),  # 'DSC_OUTRO_PAIS'
+                }
 
                 # OTHERS KEYS:
                 # GESTANTE
@@ -211,14 +216,6 @@ class RegisterBatch() :
                 self.dict['NUM_ENDERECO'] = "1"  # precisa criar parser
                 self.dict['BAIRRO'] = "bairro"  # precisa criar parser
                 self.dict['COMPLEMENTO'] = "complemento"
-                self.dict['1A_DOSE_OUTRO_ESTADO'] = "null"
-                self.dict['1A_DOSE_OUTRO_PAIS'] = "null"
-
-                if (self.dict['DSC_OBSERVACAO'] != 'None'):
-                    unidecode(self.dict['DSC_OBSERVACAO']).upper()
-                    if ("1A DOSE EM OUTRO ESTADO" in self.dict['DSC_OBSERVACAO']):
-                        pass
-
 
                 #### INFOS PARA VACINACAO
                 # fixos:
@@ -243,7 +240,6 @@ class RegisterBatch() :
 
 
                 self.comorbset = set()
-
                 # parse grupo
                 # regras especiais
                 if ("SÍNDROME DE DOWN" in self.dict['DSC_PUBLICO']) :
@@ -359,6 +355,30 @@ class RegisterBatch() :
                     "%Y-%m-%dT%H:%M:%S.000Z")
                 self.dict['DTA_COMPARECIMENTO_PESSOA'] = str(self.dict['DTA_COMPARECIMENTO_PESSOA'])
 
+                #parse dose anterior em outro estado/país
+                if self.dict['DSC_OUTRO_ESTADO']:
+                    for uf in dados_base["UFs"]:
+                        if uf['SiglaUF'] == self.dict['DSC_OUTRO_ESTADO']:
+                            estado = uf['IdUF']
+                            break
+                    if self.dict['NUM_DOSE_VACINA'] == di.dose_id['2']:
+                        self.dict['PrimeiraDoseOutroEstado'] = True
+                        self.dict['IdUFPrimeiraDose'] = estado
+                    elif self.dict['NUM_DOSE_VACINA'] == di.dose_id['Adicional']:
+                        self.dict['SegundaDoseOutroEstado'] = True
+                        self.dict['IdUFSegundaDose'] = estado
+                elif self.dict['DSC_OUTRO_PAIS']:
+                    for p in dados_base["Paises"]:
+                        if p['Pais'] == self.dict['DSC_OUTRO_PAIS']:
+                            pais = p['IdPais']
+                            break
+                    if self.dict['NUM_DOSE_VACINA'] == di.dose_id['2']:
+                        self.dict['PrimeiraDoseOutroPais'] = True
+                        self.dict['IdPaisPrimeiraDose'] = pais
+                    elif self.dict['NUM_DOSE_VACINA'] == di.dose_id['Adicional']:
+                        self.dict['SegundaDoseOutroPais'] = True
+                        self.dict['IdPaisSegundaDose'] = pais
+
             except Exception as e:
                 parser_error = e
 
@@ -425,6 +445,7 @@ def fetch_lotes(login):
     print("Scrapper de lotes ", auth_message)
     
     resp = ray.get(response_future)
+    dados_paciente_future = vacivida.get_dados_paciente.remote() # lista de possíveis valores para o cadastro de paciente
 
     #salva lotes p/ consulta
     with open("logs/lotes.json", "w") as fp:
@@ -439,7 +460,8 @@ def fetch_lotes(login):
     #atualiza os lotes no db
     ray.remote(update_lotes_db).remote(lotes_local)
 
-    return lotes_local
+    dados_paciente = ray.get( dados_paciente_future )
+    return lotes_local, dados_paciente
 
 def update_lotes_db(local_lotes):
     print("Atualizando lista de lotes no Banco de Dados")
@@ -513,7 +535,7 @@ while __name__ == "__main__":
         while True:
             print("Atualizando listas de lotes")
             try:
-                lotes = fetch_lotes( list(login_vacivida.values())[0] )     #utiliza o login da primeira unidade
+                lotes, dados_base = fetch_lotes( list(login_vacivida.values())[0] )     #utiliza o login da primeira unidade
                 print("Lista de lotes atualizada")
                 break
             except Exception as e:

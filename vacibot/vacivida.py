@@ -54,10 +54,14 @@ def parse_vacinacao_json(objimunizacao, id_vacinacao=None):
         "IdMotivoDoseAdicional":objimunizacao.get("IdMotivoDoseAdicional"),
         # "FlagDoseAdicional":objimunizacao.get("FlagDoseAdicional"),
         # "DescricaoMotivoDoseAdicional":objimunizacao.get("DescricaoMotivoDoseAdicional"),
-        "IdPaisPrimeiraDose":None,
-        "IdUFPrimeiraDose":None,
-        "PrimeiraDoseOutroEstado":None,
-        "PrimeiraDoseOutroPais":None,
+        "PrimeiraDoseOutroEstado" : objimunizacao.get("PrimeiraDoseOutroEstado"),
+        "IdUFPrimeiraDose" : objimunizacao.get("IdUFPrimeiraDose"),
+        "SegundaDoseOutroEstado" : objimunizacao.get("SegundaDoseOutroEstado"),
+        "IdUFSegundaDose" : objimunizacao.get("IdUFSegundaDose"),
+        "PrimeiraDoseOutroPais" : objimunizacao.get("PrimeiraDoseOutroPais"),
+        "IdPaisPrimeiraDose" : objimunizacao.get("IdPaisPrimeiraDose"),
+        "SegundaDoseOutroPais" : objimunizacao.get("SegundaDoseOutroPais"),
+        "IdPaisSegundaDose" : objimunizacao.get("IdPaisSegundaDose"),
         "FlagInvalido": 0,
         "IdComorbidade"         : objimunizacao["COMORBLIST"],
         "CRMComorbidade"        : objimunizacao["NUM_CRM"] or "",
@@ -556,5 +560,17 @@ class Vacivida_Sys :
         }
         resp = requests.post('https://servico.vacivida.sp.gov.br/Cadastro/Vacinador/estabelecimento', 
                             headers=self.headers, json=data, timeout=500)
+        resp_text = json.loads(resp.text) 
+        return resp_text["Data"]
+
+    def get_dados_vacinacao(self, estabelecimento_id):
+        resp = requests.get('https://servico.vacivida.sp.gov.br/Vacinacao/dados-principais/' + estabelecimento_id, 
+                            headers=self.headers, timeout=500)
+        resp_text = json.loads(resp.text) 
+        return resp_text["Data"]
+
+    def get_dados_paciente(self):
+        resp = requests.get('https://servico.vacivida.sp.gov.br/Paciente/dados-cadastro-basico', 
+                            headers=self.headers, timeout=500)
         resp_text = json.loads(resp.text) 
         return resp_text["Data"]
