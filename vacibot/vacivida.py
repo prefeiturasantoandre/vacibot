@@ -101,8 +101,13 @@ class Vacivida_Sys :
             "Login":login[0],
             "Senha":login[1]
         }}
-        response_login = requests.post('https://servico.vacivida.sp.gov.br/Usuario/Logar', headers=self.headers,
+        try:
+            response_login = requests.post('https://servico.vacivida.sp.gov.br/Usuario/Logar', headers=self.headers,
                                        json=data)
+        except Exception as e:
+            return "Nao autenticado: "+e
+        if response_login.status_code != requests.codes.ok:
+            return "Nao autenticado: "+f"{response_login.status_code} - Erro durante o Request de login"
 
         # transforma resposta em chaves
         resp_text = json.loads(response_login.text)
