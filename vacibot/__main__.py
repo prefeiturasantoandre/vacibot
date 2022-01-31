@@ -125,7 +125,7 @@ class RegisterBatch() :
                             self.list_index[15] : list_agenda_line[15],  # 'DTA_COMPARECIMENTO_PESSOA'
                             self.list_index[16] : str((list_agenda_line[16])),  # 'NUM_LOTE_VACINA'
                             self.list_index[17] : str(list_agenda_line[17]),  # 'DSC_TIPO_VACINA'
-                            self.list_index[18] : str(list_agenda_line[18]),  # 'NUM_DOSE_VACINA'
+                            self.list_index[18] : list_agenda_line[18],  # 'NUM_DOSE_VACINA'
                             self.list_index[19] : str(list_agenda_line[19]),  # 'DSC_OBSERVACAO'
                             self.list_index[20] : str(list_agenda_line[20]),  # 'NUM_BPC'
                             self.list_index[21] : list_agenda_line[21],  # 'NUM_CRM'
@@ -276,7 +276,7 @@ class RegisterBatch() :
                     elif "Quilombola" in self.dict['DSC_COMORBIDADES'] :
                         self.dict['DSC_PUBLICO'] = di.grupo_id['QUILOMBOLA']   
 
-                elif self.dict['NUM_DOSE_VACINA'] == '3':
+                elif self.dict['NUM_DOSE_VACINA'] >= 3:
                     pass    #grupo será replicado pelo estado 8 do Filler
                 else :
                     parser_error = f"Grupo de vacinacao nao identificado! {self.dict['DS_GRUPO_ATENDIMENTO']}"      
@@ -286,7 +286,7 @@ class RegisterBatch() :
 
                 # parse dose
                 #verifica se é dose adicional
-                if self.dict['NUM_DOSE_VACINA'] == '3':
+                if self.dict['NUM_DOSE_VACINA'] >= 3:
                     self.dict['NUM_DOSE_VACINA'] = 'Adicional'
                     self.dict["FlagDoseAdicional"] = 1
                     if self.dict['DSC_PUBLICO'] in ( di.grupo_id['IDOSO'], di.grupo_id['IDOSO EM ILPI'] ):
@@ -302,7 +302,7 @@ class RegisterBatch() :
                     else:
                         parser_error = f"Motivo de dose adicional não identificado | DSC_PUBLICO={self.dict['DSC_PUBLICO'] }"          
 
-                self.dict['NUM_DOSE_VACINA'] = di.dose_id[self.dict['NUM_DOSE_VACINA']]
+                self.dict['NUM_DOSE_VACINA'] = di.dose_id[str(self.dict['NUM_DOSE_VACINA'])]
                 if ("JANSSEN" in self.dict['DSC_TIPO_VACINA'] or "Janssen" in self.dict['DSC_TIPO_VACINA']) and self.dict['NUM_DOSE_VACINA'] != di.dose_id['Adicional']:
                     self.dict['NUM_DOSE_VACINA'] = di.dose_id["Unica"]       #dose única
 
